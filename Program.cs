@@ -7,6 +7,14 @@ using UtilitiesHR.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // =====================================================
+// Kestrel listen di semua IP port 5000
+// Bisa diakses via:
+//  - http://localhost:5000
+//  - http://192.168.100.68:5000 (IP WiFi kamu)
+// =====================================================
+builder.WebHost.UseUrls("http://0.0.0.0:5000");
+
+// =====================================================
 // EPPlus License (EPPlus 8 -> WAJIB PAKAI INI)
 // =====================================================
 ExcelPackage.License.SetNonCommercialOrganization("UtilitiesHR");
@@ -73,7 +81,6 @@ using (var scope = app.Services.CreateScope())
     }
 
     // ---- Seed SuperAdmin User ----
-    // NOTE: kalau mau ganti email/password default, ubah di sini
     const string superAdminEmail = "superadmin@utilitieshr.local";
     const string superAdminPassword = "Pertamina@2025";
 
@@ -85,15 +92,13 @@ using (var scope = app.Services.CreateScope())
             UserName = superAdminEmail,
             Email = superAdminEmail,
             EmailConfirmed = true,
-            // Kalau kamu punya properti lain di ApplicationUser, boleh diisi di sini.
-            MustChangePassword = true  // supaya dipaksa ganti password saat pertama login
+            MustChangePassword = true
         };
 
         var createResult = await userManager.CreateAsync(superAdmin, superAdminPassword);
 
         if (createResult.Succeeded)
         {
-            // pastikan dia ada di role SuperAdmin
             if (!await userManager.IsInRoleAsync(superAdmin, "SuperAdmin"))
             {
                 await userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
@@ -122,7 +127,9 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// JANGAN redirect ke HTTPS, karena kita cuma pakai HTTP 5000
+// app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
 app.UseRouting();
@@ -178,7 +185,6 @@ app.UseStatusCodePagesWithReExecute("/Error/StatusCode", "?code={0}");
 // =====================================================
 // Custom Root Redirect
 // =====================================================
-// Jika user membuka "/", arahkan ke Dashboard (Employees/Index)
 app.MapGet("/", context =>
 {
     if (!context.User.Identity.IsAuthenticated)
