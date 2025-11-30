@@ -1,0 +1,35 @@
+﻿@model UtilitiesHR.Models.JenisBarang
+
+<form asp-action="Edit" asp-route-id="@Model.Id" id="formJenisBarangEdit">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+    <div class="row g-3">
+        <div class="col-12">
+            <label class="form-label">Nama Jenis Barang</label>
+            <input asp-for="Nama" class="form-control" placeholder="Masukkan nama jenis barang" required />
+            <span class="text-danger" asp-validation-for="Nama"></span>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">Keterangan</label>
+            <textarea asp-for="Keterangan" class="form-control" rows="3" placeholder="Masukkan keterangan (opsional)"></textarea>
+            <span class="text-danger" asp-validation-for="Keterangan"></span>
+        </div>
+
+        <div class="col-12 d-flex gap-2 mt-3">
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-check-lg"></i> Simpan Perubahan
+            </button>
+            <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">
+                <i class="bi bi-x-lg"></i> Batal
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+    // Re-attach validator ke form
+    $.validator.unobtrusive.parse("#formJenisBarangEdit");
+</script>

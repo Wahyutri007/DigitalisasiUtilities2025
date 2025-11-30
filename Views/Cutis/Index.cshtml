@@ -1,0 +1,399 @@
+﻿@model IEnumerable<UtilitiesHR.Controllers.CutisController.CutiSummaryVM>
+@using System
+
+@{
+    ViewData["Title"] = "Cuti Pekerja";
+    ViewData["Breadcrumb"] = "Cuti Pekerja";
+
+    var q = Context.Request.Query["q"].ToString();
+
+    // Filter tahun dari querystring
+    var yearStr = Context.Request.Query["year"].ToString();
+    int? year = null;
+    if (int.TryParse(yearStr, out var tmpYear))
+    {
+        year = tmpYear;
+    }
+
+    var canManageCuti = User.IsInRole("Admin")
+                        || User.IsInRole("SuperAdmin")
+                        || User.IsInRole("Supervisor");
+
+    // 🔹 Tahun diambil dari ViewBag (semua tahun yang ada di data, dihitung di controller)
+    var yearOptions = (IEnumerable<int>)(ViewBag.YearOptions ?? Enumerable.Empty<int>());
+}
+
+@section Styles {
+    <style>
+        /* ====== BUTTON HEADER (SEJAJAR DENGAN BREADCRUMB) ====== */
+        .cuti-header-actions .btn {
+            min-width: 38px;
+        }
+
+            .cuti-header-actions .btn i {
+                font-size: 1rem;
+            }
+
+        .btn-pill-outline {
+            background: #ffffff;
+            border-radius: 999px;
+            border: 1px solid #d0d7e6;
+            color: #0f172a;
+        }
+
+            .btn-pill-outline i {
+                color: #0a5db0; /* biru nav aktif */
+            }
+
+            .btn-pill-outline:hover {
+                background: #f3f6fb;
+                border-color: #c3cce3;
+            }
+
+        .btn-pill-primary {
+            border-radius: 999px;
+            background: #0f7bd9;
+            border-color: #0f7bd9;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+        }
+
+            .btn-pill-primary:hover {
+                background: #0a5db0;
+                border-color: #0a5db0;
+            }
+
+            .btn-pill-primary i {
+                color: #ffffff;
+            }
+
+        @@media (max-width: 575.98px) {
+            .cuti-header-actions .btn span {
+                display: none !important; /* di HP, icon saja */
+            }
+
+            .cuti-header-actions .btn {
+                padding-inline: .55rem;
+            }
+        }
+
+        /* ====== WRAPPER TABEL CUTI ====== */
+        .cuti-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            box-shadow: 0 10px 32px rgba(15,23,42,.06);
+            padding: 1.2rem 1.4rem;
+            background: #ffffff;
+        }
+
+        .cuti-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+
+            .cuti-table thead th {
+                background-color: #f3f6fb;
+                color: #1f2937;
+                font-weight: 600;
+                font-size: .8rem;
+                padding: .7rem 1rem;
+                border-bottom: 2px solid #e1e6f0 !important;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+
+            .cuti-table tbody td {
+                padding: .65rem 1rem;
+                border-bottom: 1px solid #eef1f7;
+                vertical-align: middle;
+                font-size: .8rem;
+            }
+
+            .cuti-table tbody tr:nth-child(odd) {
+                background-color: #ffffff;
+            }
+
+            .cuti-table tbody tr:nth-child(even) {
+                background-color: #f9fafc;
+            }
+
+            .cuti-table tbody tr:hover {
+                background-color: #edf4ff;
+            }
+    </style>
+}
+
+@* ====== TOMBOL AKSI DI HEADER GLOBAL (KANAN BREADCRUMB) ====== *@
+@section PageActions {
+    <div class="cuti-header-actions d-flex flex-wrap justify-content-end gap-2">
+        @if (canManageCuti)
+        {
+            <!-- Button Import (pakai modal AJAX) -->
+            <button class="btn btn-pill-outline" id="btn-import-modal">
+                <i class="bi bi-file-earmark-arrow-up me-1"></i>
+                <span class="d-none d-md-inline">Import</span>
+            </button>
+        }
+
+        <!-- Template & Export -->
+        <div class="btn-group">
+            <button class="btn btn-pill-outline dropdown-toggle" data-bs-toggle="dropdown" type="button">
+                <i class="bi bi-download me-1"></i>
+                <span class="d-none d-md-inline">Template &amp; Export</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li class="dropdown-header">Template Import</li>
+                @if (canManageCuti)
+                {
+                    <li>
+                        <a class="dropdown-item" href="@Url.Action("DownloadTemplateExcel")">
+                            <i class="bi bi-file-earmark-excel me-1"></i>Template Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="@Url.Action("DownloadTemplateCsv")">
+                            <i class="bi bi-filetype-csv me-1"></i>Template CSV
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider" /></li>
+                }
+
+                <li class="dropdown-header">Export Data</li>
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("ExportExcel", new { q, year })">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export Excel
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("ExportCsv", new { q, year })">
+                        <i class="bi bi-filetype-csv me-1"></i>Export CSV
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        @if (canManageCuti)
+        {
+            <!-- Tombol Create modal (manual input) -->
+            <button class="btn btn-pill-primary" id="btn-create-modal">
+                <i class="bi bi-plus-lg me-1"></i>
+                <span class="d-none d-md-inline">Input Cuti</span>
+            </button>
+        }
+    </div>
+}
+
+@* ====== ISI HALAMAN SESUDAH HEADER GLOBAL ====== *@
+
+<div class="cuti-table-wrapper">
+
+    @* FILTER TAHUN (SEMUA TAHUN DARI DATA) *@
+   
+    <div class="table-responsive">
+        <table id="tbl-ringkasan" class="table cuti-table align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:20px;">#</th>
+                    <th>Nama</th>
+                    <th>Nopeg</th>
+                    <th class="text-center">Kuota</th>
+                    <th class="text-center">Diambil</th>
+                    <th class="text-center">Sisa</th>
+                    <th class="text-center" data-priority="1">Detail</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td class="text-center"></td>
+                        <td>@r.Nama</td>
+                        <td>@r.Nopeg</td>
+                        <td class="text-center">@r.Kuota</td>
+                        <td class="text-center">@r.Diambil</td>
+                        <td class="text-center">@r.Sisa</td>
+                        <td class="text-center">
+                            <a class="btn btn-sm btn-outline-secondary"
+                               asp-action="Details"
+                               asp-route-employeeId="@r.EmployeeId">
+                                <i class="bi bi-search"></i> Detail
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(function () {
+            const $ajaxModal = $('#ajax-modal');
+            const $modalBody = $ajaxModal.find('.modal-body');
+            const $modalTitle = $ajaxModal.find('.modal-title');
+
+            // --- helper supaya setiap kali partial Create/Edit dimuat
+            //     kita parse ulang validator & Select2, jadi kalau sebelumnya error
+            //     tidak bikin form "mati", dan tidak perlu refresh halaman.
+            function initCutiModalForm() {
+                const $form = $('#ajax-form');
+
+                if ($form.length && $.validator && $.validator.unobtrusive) {
+                    $.validator.unobtrusive.parse($form);
+                }
+
+                // jika partial Create punya #EmployeeId, aktifkan Select2 lagi
+                if ($('#EmployeeId').length && $.fn.select2) {
+                    $('#EmployeeId').select2({
+                        theme: 'bootstrap-5',
+                        dropdownParent: $ajaxModal
+                    });
+                }
+            }
+
+            // --- DataTables ---
+            const tableRingkasan = $('#tbl-ringkasan').DataTable({
+                responsive: true,
+                dom:
+                    "<'row g-2 mb-2'<'col-6 col-md-4'l><'col-6 col-md-4 offset-md-4'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row mt-1'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
+                order: [[1, 'asc']],
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
+                language: {
+                    search: "Cari:",
+                    lengthMenu: "_MENU_ baris",
+                    info: "_START_–_END_ dari _TOTAL_",
+                    infoEmpty: "Tidak ada data",
+                    zeroRecords: "Tidak ditemukan",
+                    paginate: { first: "<<", last: ">>", next: ">", previous: "<" }
+                },
+                columnDefs: [
+                    { targets: 0, orderable: false, searchable: false },
+                    { targets: 6, orderable: false, searchable: false }
+                ]
+            });
+
+            tableRingkasan.on('draw.dt', function () {
+                const info = tableRingkasan.page.info();
+                tableRingkasan.column(0, { search: 'applied', order: 'applied' }).nodes()
+                    .each(function (cell, i) {
+                        cell.innerHTML = info.start + i + 1;
+                    });
+            }).draw();
+
+            function resetModalLayout() {
+                $modalBody.removeClass().addClass('modal-body');
+            }
+
+            // --- Modal CREATE (manual) ---
+            $('#btn-create-modal').on('click', function () {
+                resetModalLayout();
+                $modalTitle.text('Input Data Cuti');
+                $modalBody.load('@Url.Action("Create")', function () {
+                    initCutiModalForm(); // pastikan validator & select2 aktif
+                    $ajaxModal.modal('show');
+                });
+            });
+
+            // --- Modal IMPORT ---
+            $('#btn-import-modal').on('click', function () {
+                resetModalLayout();
+                $modalTitle.text('Import Data Cuti');
+                $modalBody.load('@Url.Action("Import")', function () {
+                    initCutiModalForm();
+                    $ajaxModal.modal('show');
+                });
+            });
+
+            // --- Submit IMPORT (#import-form) ---
+            $('body').on('submit', '#import-form', function (e) {
+                e.preventDefault();
+                const form = this;
+                const formData = new FormData(form);
+
+                $.ajax({
+                    url: form.action,
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    beforeSend: function () {
+                        if (window.showLoader) window.showLoader(400);
+                    },
+                    complete: function () {
+                        if (window.hideLoader) window.hideLoader();
+                    },
+                    success: function (res) {
+                        if (res.success) {
+                            $ajaxModal.modal('hide');
+                            Swal.fire('Berhasil', res.message, 'success')
+                                .then(() => window.location.reload());
+                        } else {
+                            let msg = res.message || 'Import gagal.';
+                            if (res.errors && res.errors.length) {
+                                msg += "<ul class='text-start mt-2'>";
+                                res.errors.forEach(e => msg += `<li>${e}</li>`);
+                                msg += "</ul>";
+                            }
+                            Swal.fire({ title: 'Gagal', html: msg, icon: 'error' });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Terjadi kesalahan server saat import.', 'error');
+                    }
+                });
+            });
+
+            // --- Submit CREATE/EDIT dari modal (#ajax-form) ---
+            $('body').on('submit', '#ajax-form', function (e) {
+                e.preventDefault();
+                const $form = $(this);
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            $ajaxModal.modal('hide');
+                            Swal.fire('Berhasil', response.message, 'success')
+                                .then(() => {
+                                    if (response.employeeId && response.employeeId > 0) {
+                                        window.location.href = '@Url.Action("Details")?employeeId=' + response.employeeId;
+                                    } else {
+                                        window.location.reload();
+                                    }
+                                });
+                        } else {
+                            let errorMsg = (response.message || 'Gagal menyimpan.') +
+                                "\n<ul class='text-start mt-2'>";
+                            (response.errors || []).forEach(err => {
+                                errorMsg += `<li>${err}</li>`;
+                            });
+                            errorMsg += "</ul>";
+                            Swal.fire({ title: 'Gagal', html: errorMsg, icon: 'error' });
+
+                            // kalau gagal, pastikan form di modal tetap "hidup"
+                            initCutiModalForm();
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                        initCutiModalForm();
+                    }
+                });
+            });
+
+            // setiap kali modal benar-benar ditampilkan, jaga-jaga init lagi
+            $ajaxModal.on('shown.bs.modal', function () {
+                initCutiModalForm();
+            });
+        });
+    </script>
+}

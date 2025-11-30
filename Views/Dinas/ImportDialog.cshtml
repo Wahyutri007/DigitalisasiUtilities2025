@@ -1,0 +1,71 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+}
+
+<style>
+    .dinas-modal-stack {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 140px);
+    }
+
+    .dinas-modal-scroll {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding-right: 4px;
+        padding-bottom: 0.25rem;
+    }
+
+    .dinas-modal-actions {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg, #fff);
+        border-top: 1px solid var(--line, #dee2e6);
+        padding-top: 0.75rem;
+        padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 0.25rem);
+        margin-top: 0.5rem;
+        z-index: 1;
+    }
+
+    @@media (max-width: 575.98px) {
+        .dinas-modal-stack {
+            max-height: calc(100vh - 110px);
+        }
+    }
+</style>
+
+<div class="dinas-modal-stack">
+    <div class="dinas-modal-scroll">
+        <form id="ajax-form"
+              asp-action="Import"
+              asp-controller="Dinas"
+              method="post"
+              enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label">Pilih File (.xlsx / .csv)</label>
+                <input class="form-control" type="file" name="file" accept=".xlsx,.csv" required />
+                <div class="form-text">
+                    Gunakan template dengan header:
+                    <b>Nama</b>, <b>Person Id</b>, <b>Judul Dinas (Kegiatan)</b>,
+                    <b>Lokasi (opsional)</b>, <b>Jenis Dinas</b>,
+                    <b>Start Date</b>, <b>End Date</b>,
+                    <b>Sifat (PCU/Utilities, opsional)</b>.<br />
+                    Format tanggal disarankan: <code>dd/MM/yyyy</code>.
+                    <a asp-action="DownloadImportTemplate">Download template di sini</a>.
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="dinas-modal-actions d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Batal
+        </button>
+        <button type="submit" class="btn btn-primary" form="ajax-form">
+            <i class="bi bi-upload"></i> Import
+        </button>
+    </div>
+</div>

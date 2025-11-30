@@ -1,0 +1,341 @@
+﻿@model UtilitiesHR.Models.Dinas
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using UtilitiesHR.Models
+@using System.Linq
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    Layout = null;
+
+    var employeeSelectList = ViewBag.EmployeeId as SelectList ?? new SelectList(Enumerable.Empty<object>());
+    var jenisDinasSelectList = ViewBag.JenisDinasId as SelectList ?? new SelectList(Enumerable.Empty<object>());
+
+    // cek apakah dipanggil dari Detail (ada employeeId di query string)
+    long fixedEmployeeId;
+    bool isFixedEmployee = long.TryParse(Context.Request.Query["employeeId"], out fixedEmployeeId) && fixedEmployeeId > 0;
+
+    string fixedEmployeeCaption = "";
+    if (isFixedEmployee)
+    {
+        var items = employeeSelectList.Cast<SelectListItem>();
+        var item = items.FirstOrDefault(x => x.Value == fixedEmployeeId.ToString());
+        fixedEmployeeCaption = item?.Text ?? "(Pekerja terpilih)";
+    }
+}
+
+<style>
+    .dinas-modal-stack {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dinas-modal-scroll {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding-right: 4px;
+        padding-bottom: 0.25rem;
+    }
+
+    .dinas-modal-actions {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg, #fff);
+        border-top: 1px solid var(--line, #dee2e6);
+        padding-top: 0.75rem;
+        padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 0.25rem);
+        margin-top: 0.5rem;
+        z-index: 1;
+    }
+
+    @@media (min-width: 576px) {
+        .dinas-modal-stack
+
+    {
+        max-height: calc(100vh - 140px);
+    }
+
+    }
+
+    @@media (max-width: 575.98px) {
+        #ajax-modal .modal-dialog
+
+    {
+        margin: 0;
+        height: 100vh;
+    }
+
+    #ajax-modal .modal-content,
+    #ajax-modal .modal-body {
+        height: 100%;
+    }
+
+    .dinas-modal-stack {
+        height: 100%;
+        max-height: none;
+    }
+
+    }
+</style>
+
+<div class="dinas-modal-stack">
+    <div class="dinas-modal-scroll">
+        <form asp-action="Create" id="ajax-form">
+            @Html.AntiForgeryToken()
+
+            @* binding EmployeeId *@
+            @if (isFixedEmployee)
+            {
+                <input type="hidden" asp-for="EmployeeId" value="@fixedEmployeeId" />
+            }
+
+            <input type="hidden" asp-for="JenisDinasId" id="JenisDinasIdHidden" />
+            <input type="hidden" id="NewJenisNama" name="newJenisNama" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Nama Pekerja</label>
+
+                    @if (isFixedEmployee)
+                    {
+                        <input type="text" class="form-control" value="@fixedEmployeeCaption" readonly />
+                        <div class="form-text">Pekerja sudah dipilih dari halaman detail.</div>
+                    }
+                    else
+                    {
+                        <select asp-for="EmployeeId"
+                                class="form-select"
+                                asp-items="employeeSelectList"
+                                id="EmployeeId">
+                            <option value="">— pilih pekerja —</option>
+                        </select>
+                        <span asp-validation-for="EmployeeId" class="text-danger"></span>
+                    }
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Jenis Dinas</label>
+                    <div class="input-group">
+                        <select class="form-select" id="JenisDinasSelect">
+                            <option></option>
+                            @foreach (var item in jenisDinasSelectList)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                     
+                    </div>
+                    <span asp-validation-for="JenisDinasId" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Sifat (opsional)</label>
+                    <select asp-for="Sifat"
+                            class="form-select"
+                            asp-items="Html.GetEnumSelectList<SifatDinas>()"
+                            id="Sifat">
+                        <option value="">— (kosong) —</option>
+                    </select>
+                    <span asp-validation-for="Sifat" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Tanggal Berangkat</label>
+                    <input asp-for="TanggalBerangkat"
+                           type="date"
+                           class="form-control"
+                           id="tglBerangkat" />
+                    <span asp-validation-for="TanggalBerangkat" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Tanggal Pulang</label>
+                    <input asp-for="TanggalPulang"
+                           type="date"
+                           class="form-control"
+                           id="tglPulang" />
+                    <span asp-validation-for="TanggalPulang" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Lama (hari)</label>
+                    <input type="number"
+                           class="form-control"
+                           id="lamaHari"
+                           value="1"
+                           readonly />
+                    <div class="form-text">Otomatis dari tanggal.</div>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Lokasi (opsional)</label>
+                    <input asp-for="Lokasi"
+                           class="form-control"
+                           placeholder="Contoh: Jakarta" />
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label">Kegiatan Dinas</label>
+                    <textarea asp-for="Kegiatan"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Contoh: Rapat koordinasi ..."></textarea>
+                    <span asp-validation-for="Kegiatan" class="text-danger"></span>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="dinas-modal-actions d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Batal
+        </button>
+        <button type="submit" class="btn btn-primary" form="ajax-form">
+            <i class="bi bi-check-lg"></i> Simpan
+        </button>
+    </div>
+</div>
+
+<script>
+    $.validator.unobtrusive.parse("#ajax-form");
+
+    const $modalCreate = $('#ajax-modal');
+
+    // Select2 untuk pekerja HANYA kalau ada select-nya
+    const $employeeSelect = $('#EmployeeId');
+    if ($employeeSelect.length && $employeeSelect.is('select')) {
+        $employeeSelect.select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $modalCreate
+        });
+    }
+
+    const $jenisSelectCreate = $('#JenisDinasSelect');
+    const $hiddenJenisCreate = $('#JenisDinasIdHidden');
+    const $newJenisCreate = $('#NewJenisNama');
+
+    $jenisSelectCreate.select2({
+        theme: 'bootstrap-5',
+        dropdownParent: $modalCreate,
+        placeholder: '— pilih jenis dinas —',
+        allowClear: true,
+        tags: true,
+        createTag: function (params) {
+            const term = $.trim(params.term);
+            if (term === '') return null;
+            return {
+                id: term,
+                text: term,
+                newOption: true
+            };
+        },
+        templateResult: function (data) {
+            if (data.loading) return data.text;
+            const $res = $('<span></span>').text(data.text);
+            if (data.newOption) {
+                $res.append(' (buat baru)');
+            }
+            return $res;
+        }
+    });
+
+    $('#Sifat').select2({
+        theme: 'bootstrap-5',
+        dropdownParent: $modalCreate
+    });
+
+    function syncJenisCreate() {
+        const data = $jenisSelectCreate.select2('data');
+        if (!data || data.length === 0) {
+            $hiddenJenisCreate.val(0);
+            $newJenisCreate.val('');
+            return;
+        }
+        const item = data[0];
+        const id = item.id != null ? String(item.id) : '';
+        const parsed = parseInt(id, 10);
+
+        if (!isNaN(parsed) && String(parsed) === id) {
+            $hiddenJenisCreate.val(parsed);
+            $newJenisCreate.val('');
+        } else {
+            $hiddenJenisCreate.val(0);
+            $newJenisCreate.val(item.text);
+        }
+    }
+
+    $jenisSelectCreate.on('select2:select select2:clear change', syncJenisCreate);
+    syncJenisCreate();
+
+    // tombol plus
+    document.getElementById('btn-add-jenis-dinas')?.addEventListener('click', async () => {
+        const nama = prompt('Nama jenis dinas (bebas):');
+        if (!nama || nama.trim() === '') return;
+
+        const token = document.querySelector('#ajax-form input[name="__RequestVerificationToken"]').value;
+
+        try {
+            const res = await fetch('@Url.Action("CreateJenisDinas", "Dinas")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    __RequestVerificationToken: token,
+                    nama: nama.trim()
+                })
+            });
+
+            if (!res.ok) throw new Error('Network response was not ok');
+
+            const r = await res.json();
+            if (r?.success && r.items) {
+                const sel = document.getElementById('JenisDinasSelect');
+                sel.innerHTML = '<option></option>';
+
+                r.items.forEach(it => {
+                    const opt = document.createElement('option');
+                    opt.value = it.id;
+                    opt.textContent = it.nama;
+                    sel.appendChild(opt);
+                });
+
+                sel.value = r.id;
+                $jenisSelectCreate.trigger('change');
+                $newJenisCreate.val('');
+            } else {
+                alert(r?.message || 'Gagal menambah jenis dinas.');
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);
+            alert('Gagal menambah jenis dinas. Lihat konsol untuk detail.');
+        }
+    });
+
+    // hitung hari + validasi tanggal
+    function hitungHari() {
+        const a = $('#tglBerangkat').val();
+        const b = $('#tglPulang').val();
+        const $out = $('#lamaHari');
+
+        if (!a || !b) { $out.val(1); return; }
+
+        const d1 = new Date(a + 'T00:00:00');
+        const d2 = new Date(b + 'T00:00:00');
+
+        if (isNaN(d1) || isNaN(d2)) { $out.val(1); return; }
+
+        const diff = Math.round((d2.getTime() - d1.getTime()) / 86400000) + 1;
+        const el = $('#tglPulang')[0];
+
+        if (diff >= 1) {
+            $out.val(diff);
+            el.setCustomValidity('');
+        } else {
+            $out.val(1);
+            el.setCustomValidity('Tanggal pulang tidak boleh sebelum berangkat.');
+            el.reportValidity();
+        }
+    }
+    $('#tglBerangkat, #tglPulang').on('change', hitungHari);
+    hitungHari();
+</script>

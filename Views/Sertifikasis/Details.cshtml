@@ -1,0 +1,208 @@
+﻿@model UtilitiesHR.Models.Sertifikasi
+@{
+    Layout = null; // untuk modal
+
+    var canManageSertifikasi = User.IsInRole("Admin")
+        || User.IsInRole("SuperAdmin")
+        || User.IsInRole("Supervisor");
+
+    var currentEmployeeId = ViewBag.CurrentEmployeeId as long? ?? 0L;
+    var canEditThis = canManageSertifikasi || (currentEmployeeId > 0 && Model.EmployeeId == currentEmployeeId);
+}
+
+<!-- token khusus delete dari dalam popup -->
+<form id="token-form-detail-modal" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+<style>
+    .sertif-detail-stack {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 140px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-right: 4px;
+        padding-bottom: 0.5rem;
+        font-size: .9rem;
+    }
+
+    .sertif-detail-header h3 {
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+
+    .sertif-detail-header p {
+        font-size: .85rem;
+    }
+
+    .sertif-detail-actions .btn {
+        font-size: .8rem;
+        border-radius: 999px;
+    }
+
+        .sertif-detail-actions .btn i {
+            font-size: .95rem;
+        }
+
+    @@media (max-width: 575.98px) {
+        .sertif-detail-stack {
+            max-height: calc(100vh - 110px);
+        }
+
+        .sertif-detail-actions {
+            gap: .4rem;
+        }
+
+            .sertif-detail-actions .btn span {
+                display: none !important; /* di hp hanya icon */
+            }
+
+            .sertif-detail-actions .btn {
+                padding-inline: .55rem;
+            }
+    }
+</style>
+
+<div class="sertif-detail-stack">
+    <div class="row mb-3 align-items-center sertif-detail-header">
+        <div class="col">
+            <h3 class="mb-0">@Model.NamaSertifikasi</h3>
+            <p class="text-muted mb-0">
+                @Model.Employee?.NamaLengkap (@Model.Employee?.NopegPersero)
+            </p>
+        </div>
+        <div class="col-12 col-md-auto mt-2 mt-md-0">
+            <div class="d-flex justify-content-end gap-2 flex-wrap sertif-detail-actions">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    <i class="bi bi-arrow-left"></i>
+                    <span class="d-none d-md-inline">Tutup</span>
+                </button>
+
+                @* User & pengelola tetap bisa klik Edit, tapi di form Edit nama pekerja readonly untuk user biasa *@
+                @if (canEditThis)
+                {
+                    <button type="button"
+                            class="btn btn-primary btn-edit-modal"
+                            data-id="@Model.Id">
+                        <i class="bi bi-pencil"></i>
+                        <span class="d-none d-md-inline">Edit</span>
+                    </button>
+                }
+
+                @* Delete hanya untuk Admin/SuperAdmin/Supervisor *@
+                @if (canManageSertifikasi)
+                {
+                    <button type="button"
+                            class="btn btn-danger btn-delete-modal"
+                            data-id="@Model.Id"
+                            data-nama="@Model.NamaSertifikasi">
+                        <i class="bi bi-trash"></i>
+                        <span class="d-none d-md-inline">Hapus</span>
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-4 col-lg-3">Status</dt>
+                <dd class="col-sm-8 col-lg-9">
+                    @if (Model.IsExpired)
+                    {
+                        <span class="badge bg-danger">Expired</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Aktif</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-4 col-lg-3">Periode Pelaksanaan</dt>
+                <dd class="col-sm-8 col-lg-9">
+                    @(Model.TanggalMulai?.ToString("d MMM yyyy") ?? "-")
+                    –
+                    @(Model.TanggalSelesai?.ToString("d MMM yyyy") ?? "-")
+                </dd>
+
+                <dt class="col-sm-4 col-lg-3">Periode Berlaku</dt>
+                <dd class="col-sm-8 col-lg-9">
+                    @(Model.BerlakuDari?.ToString("d MMM yyyy") ?? "-")
+                    –
+                    @(Model.BerlakuSampai?.ToString("d MMM yyyy") ?? "-")
+                </dd>
+
+                <dt class="col-sm-4 col-lg-3">Lokasi</dt>
+                <dd class="col-sm-8 col-lg-9">@(Model.Lokasi ?? "-")</dd>
+
+                <dt class="col-sm-4 col-lg-3">Keterangan</dt>
+                <dd class="col-sm-8 col-lg-9">@(Model.Keterangan ?? "-")</dd>
+
+                <dt class="col-sm-4 col-lg-3">Master Sertifikasi</dt>
+                <dd class="col-sm-8 col-lg-9">@(Model.MasterSertifikasi?.Nama ?? "-")</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        const $ajaxModal = $('#ajax-modal');
+        const $modalBody = $ajaxModal.find('.modal-body');
+        const $modalTitle = $ajaxModal.find('.modal-title');
+        const token = $('#token-form-detail-modal input[name="__RequestVerificationToken"]').val();
+
+        // EDIT dari dalam popup
+        $modalBody
+            .off('click', '.btn-edit-modal')
+            .on('click', '.btn-edit-modal', function () {
+                const id = $(this).data('id');
+                $modalTitle.text('Edit Data Sertifikasi');
+                $modalBody.load('@Url.Action("Edit")/' + id);
+            });
+
+        // DELETE dari dalam popup
+        $modalBody
+            .off('click', '.btn-delete-modal')
+            .on('click', '.btn-delete-modal', function () {
+                const id = $(this).data('id');
+                const nama = $(this).data('nama');
+
+                Swal.fire({
+                    title: 'Anda yakin?',
+                    text: `Data sertifikasi "${nama}" akan dihapus permanen.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonText: 'Batal',
+                    confirmButtonText: 'Ya, hapus!'
+                }).then((result) => {
+                    if (!result.isConfirmed) return;
+
+                    $.ajax({
+                        url: '@Url.Action("Delete")/' + id,
+                        type: 'POST',
+                        data: { "__RequestVerificationToken": token },
+                        success: function (res) {
+                            if (res && res.success) {
+                                Swal.fire('Dihapus!', res.message, 'success')
+                                    .then(() => {
+                                        $ajaxModal.modal('hide');
+                                        window.location.reload();
+                                    });
+                            } else {
+                                Swal.fire('Gagal!', res?.message || 'Gagal menghapus data.', 'error');
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                        }
+                    });
+                });
+            });
+    });
+</script>

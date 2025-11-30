@@ -1,0 +1,11 @@
+﻿@model UtilitiesHR.Models.JenisBarang
+@{
+    ViewData["Title"] = "Hapus Jenis Barang";
+}
+<h4>Hapus Jenis Barang</h4>
+<p>Yakin menghapus <b>@Model.Nama</b>?</p>
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button class="btn btn-danger">Hapus</button>
+    <a class="btn btn-outline-secondary" asp-action="Index">Batal</a>
+</form>

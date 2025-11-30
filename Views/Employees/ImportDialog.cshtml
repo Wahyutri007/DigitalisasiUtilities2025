@@ -1,0 +1,67 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+}
+
+<style>
+    .emp-modal-stack {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 140px);
+    }
+
+    .emp-modal-scroll {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding-right: 4px;
+        padding-bottom: 0.25rem;
+    }
+
+    .emp-modal-actions {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg, #fff);
+        border-top: 1px solid var(--line, #dee2e6);
+        padding-top: 0.75rem;
+        padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 0.25rem);
+        margin-top: 0.5rem;
+        z-index: 1;
+    }
+
+    @@media (max-width: 575.98px) {
+        .emp-modal-stack {
+            max-height: calc(100vh - 110px);
+        }
+    }
+</style>
+
+<div class="emp-modal-stack">
+    <div class="emp-modal-scroll">
+        <form id="ajax-form"
+              asp-action="Import"
+              method="post"
+              enctype="multipart/form-data">
+
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label">Pilih File (.xlsx / .csv)</label>
+                <input class="form-control" type="file" name="file" accept=".xlsx,.csv" required />
+                <div class="form-text">
+                    Gunakan template dengan header:
+                    <b>No</b>, <b>Nama Pekerja</b>, <b>Nopek</b>, <b>EMAIL</b>, <b>PHONE</b>, <b>Jabatan</b>.<br />
+                    Kolom lain akan diisi jika tersedia (Tempat Lahir, Tanggal Lahir, dst.).
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="emp-modal-actions d-flex gap-2 justify-content-end">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Batal
+        </button>
+        <button type="submit" class="btn btn-primary" form="ajax-form">
+            <i class="bi bi-upload"></i> Import
+        </button>
+    </div>
+</div>

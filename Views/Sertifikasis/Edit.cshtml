@@ -1,0 +1,245 @@
+﻿@model UtilitiesHR.Models.Sertifikasi
+@{
+    ViewData["Title"] = "Edit Sertifikasi";
+    Layout = null;
+
+    var canManageSertifikasi = User.IsInRole("Admin")
+        || User.IsInRole("SuperAdmin")
+        || User.IsInRole("Supervisor");
+
+    var currentEmployeeId = ViewBag.CurrentEmployeeId as long? ?? 0L;
+
+    var displayEmployeeName =
+        (ViewBag.CurrentEmployeeName as string)
+        ?? Model.Employee?.NamaLengkap
+        ?? "(tanpa nama)";
+
+    var displayEmployeeNopeg = Model.Employee?.NopegPersero ?? "";
+}
+
+<div class="sertif-form">
+    <style>
+        .sertif-form {
+            font-size: .9rem;
+        }
+
+            .sertif-form .form-label {
+                font-size: .82rem;
+                font-weight: 600;
+            }
+
+        .sertif-modal-stack {
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .sertif-modal-scroll {
+            flex: 1 0 auto;
+            padding: 1rem 1rem 0.75rem;
+        }
+
+        .sertif-modal-actions {
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            border-top: 1px solid #e5e9f2;
+            padding: 0.75rem 1rem calc(env(safe-area-inset-bottom, 8px) + 0.25rem);
+            margin-top: 0.5rem;
+            z-index: 1;
+        }
+
+            .sertif-modal-actions .btn {
+                min-width: 90px;
+            }
+
+        @@media (max-width: 575.98px) {
+            .sertif-modal-stack {
+                max-height: calc(100vh - 110px);
+            }
+
+            .sertif-modal-actions {
+                gap: .5rem;
+            }
+
+                .sertif-modal-actions .btn {
+                    width: 100%;
+                }
+        }
+
+        .select2-container--bootstrap-5 {
+            width: 100% !important;
+        }
+    </style>
+
+    <div class="sertif-modal-stack">
+        <form asp-action="Edit"
+              id="ajax-form"
+              method="post"
+              autocomplete="off">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div class="sertif-modal-scroll">
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+                <div class="row g-3">
+                    <!-- NAMA PEKERJA (SELALU READONLY) -->
+                    <div class="col-12">
+                        <label class="form-label">Nama Pekerja</label>
+
+                        <div class="input-group">
+                            <!-- EmployeeId tetap dikirim, tapi tidak bisa diubah -->
+                            <input type="hidden" asp-for="EmployeeId" />
+
+                            <input class="form-control form-control-sm"
+                                   value="@(string.IsNullOrEmpty(displayEmployeeNopeg)
+                                                                                                                  ? displayEmployeeName
+                                                                                                                  : $"{displayEmployeeName} ({displayEmployeeNopeg})")"
+                                   readonly />
+
+                            <span class="input-group-text bg-light">
+                                <i class="bi bi-person-badge"></i>
+                            </span>
+                        </div>
+
+                        <span asp-validation-for="EmployeeId" class="text-danger small"></span>
+                    </div>
+
+                    <!-- NAMA SERTIFIKASI -->
+                    <div class="col-12">
+                        <label class="form-label">Nama Sertifikasi</label>
+                        <select asp-for="NamaSertifikasi"
+                                id="NamaSertifikasi"
+                                class="form-select select2-nama-sertif"
+                                asp-items="ViewBag.SertifikasiOptions"
+                                data-placeholder="— Pilih atau Ketik Baru —"
+                                required>
+                            <option value="">— Pilih atau Ketik Baru —</option>
+                        </select>
+                        <span asp-validation-for="NamaSertifikasi" class="text-danger small"></span>
+                    </div>
+
+                    <!-- LOKASI -->
+                    <div class="col-12">
+                        <label class="form-label">Lokasi Sertifikasi</label>
+                        <input asp-for="Lokasi"
+                               class="form-control form-control-sm"
+                               placeholder="Tempat/lokasi sertifikasi" />
+                    </div>
+
+                    <!-- TANGGAL MULAI & SELESAI -->
+                    <div class="col-md-6 col-12">
+                        <label class="form-label">Tanggal Mulai</label>
+                        <input asp-for="TanggalMulai"
+                               type="date"
+                               class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-6 col-12">
+                        <label class="form-label">Tanggal Selesai</label>
+                        <input asp-for="TanggalSelesai"
+                               type="date"
+                               class="form-control form-control-sm" />
+                    </div>
+
+                    <!-- BERLAKU DARI & SAMPAI -->
+                    <div class="col-md-6 col-12">
+                        <label class="form-label">Berlaku Dari</label>
+                        <input asp-for="BerlakuDari"
+                               type="date"
+                               class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-6 col-12">
+                        <label class="form-label">Berlaku Sampai</label>
+                        <input asp-for="BerlakuSampai"
+                               type="date"
+                               class="form-control form-control-sm" />
+                    </div>
+
+                    <!-- KETERANGAN -->
+                    <div class="col-12 mb-2">
+                        <label class="form-label">Keterangan</label>
+                        <input asp-for="Keterangan"
+                               class="form-control form-control-sm"
+                               placeholder="Keterangan tambahan (opsional)" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="sertif-modal-actions d-flex justify-content-end gap-2">
+                <button type="button"
+                        class="btn btn-outline-secondary btn-sm"
+                        data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> Batal
+                </button>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-check-lg"></i> Update
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        const $form = $('#ajax-form');
+
+        if ($.validator && $.validator.unobtrusive) {
+            $.validator.unobtrusive.parse($form);
+        }
+
+        const $modal = $('#ajax-modal');
+        const $namaSertifikasi = $('#NamaSertifikasi');
+
+        if ($namaSertifikasi.length) {
+            $namaSertifikasi.select2({
+                theme: 'bootstrap-5',
+                dropdownParent: $modal,
+                width: '100%',
+                placeholder: $namaSertifikasi.data('placeholder') || '— Pilih atau Ketik Baru —',
+                tags: true, // boleh ketik baru
+                createTag: function (params) {
+                    const term = params.term.trim();
+                    if (term === '') return null;
+                    return { id: term, text: term, newTag: true };
+                },
+                templateResult: function (data) {
+                    const $result = $('<span></span>').text(data.text);
+                    if (data.newTag) {
+                        $result.append(" <span class='badge bg-success ms-1'>baru</span>");
+                    }
+                    return $result;
+                },
+                language: {
+                    noResults: function () {
+                        return "Tidak ditemukan. Ketik nama sertifikasi baru lalu tekan Enter.";
+                    },
+                    searching: function () {
+                        return "Mencari...";
+                    }
+                }
+            });
+
+            // === BAGIAN PENTING: pas dropdown dibuka, isi search box dengan teks lama ===
+            $namaSertifikasi.on('select2:open', function () {
+                setTimeout(function () {
+                    const selectedText = $namaSertifikasi.find('option:selected').text().trim();
+                    const searchField = document.querySelector('.select2-search__field');
+
+                    if (searchField) {
+                        // isi dengan teks lama
+                        searchField.value = selectedText;
+                        // fokus & kursor di akhir teks (biar tinggal backspace / edit)
+                        const len = selectedText.length;
+                        searchField.focus();
+                        if (searchField.setSelectionRange) {
+                            searchField.setSelectionRange(len, len);
+                        }
+                    }
+                }, 100);
+            });
+        }
+    });
+</script>

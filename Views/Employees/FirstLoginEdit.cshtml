@@ -1,0 +1,497 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model UtilitiesHR.Models.Employee
+
+@{
+    ViewData["Title"] = "Lengkapi Data Pekerja";
+    ViewData["Breadcrumb"] = "Pekerja / Lengkapi Data";
+    Layout = "_Layout";
+
+    var jabatanList = ViewBag.JabatanList as List<string> ?? new();
+    var pendidikanList = ViewBag.PendidikanList as List<string> ?? new();
+    var jurusanList = ViewBag.JurusanList as List<string> ?? new();
+    var institusiList = ViewBag.InstitusiList as List<string> ?? new();
+    var statusList = ViewBag.StatusNikahList as List<string> ?? new();
+
+    var ukWearpackList = ViewBag.UkWearpackList as List<string> ?? new();
+    var ukKemejaPutihList = ViewBag.UkKemejaPutihList as List<string> ?? new();
+    var ukKemejaProdukList = ViewBag.UkKemejaProdukList as List<string> ?? new();
+    var ukSepatuSafetyList = ViewBag.UkSepatuSafetyList as List<string> ?? new();
+}
+
+<style>
+    .employee-form {
+        font-size: .9rem;
+    }
+
+        .employee-form .wizard-nav {
+            border-bottom: 1px solid #e5e9f2;
+            margin-bottom: 1rem;
+        }
+
+            .employee-form .wizard-nav .nav-link {
+                border: none;
+                border-bottom: 2px solid transparent;
+                padding: .35rem .7rem;
+                font-size: .78rem;
+                text-transform: uppercase;
+                letter-spacing: .06em;
+                color: #6b7280;
+            }
+
+                .employee-form .wizard-nav .nav-link.active {
+                    color: #2563eb;
+                    border-bottom-color: #2563eb;
+                    font-weight: 600;
+                }
+
+        .employee-form .section-label {
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: #9ca3af;
+            margin-bottom: .25rem;
+        }
+
+        .employee-form .form-label {
+            font-size: .82rem;
+            font-weight: 600;
+        }
+
+    .emp-page-actions .btn {
+        min-width: 90px;
+    }
+
+    @@media (max-width: 575.98px) {
+        .emp-page-actions {
+            flex-direction: column;
+            align-items: stretch !important;
+        }
+
+            .emp-page-actions .btn {
+                width: 100%;
+            }
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- HEADER GLOBAL -->
+    <div class="page-header pb-2 mb-3 border-bottom mt-3">
+        <div class="row align-items-center g-2">
+            <div class="col">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                          style="width:36px;height:36px;background:linear-gradient(135deg,#5b9df9,#6fe0bb);box-shadow:0 6px 18px rgba(91,157,249,.25);">
+                        <i class="fas fa-user-check text-white fs-6"></i>
+                    </span>
+                    <div>
+                        <h4 class="mb-0 fw-semibold" style="color:#1f2a44; letter-spacing:.2px;">
+                            Lengkapi Data Pekerja
+                        </h4>
+                        <small class="text-muted">
+                            Silakan lengkapi data diri Anda sebelum menggunakan Utilities HR.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CARD FORM -->
+    <div class="row">
+        <div class="col-lg-10 col-xl-9 mx-auto">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-md-4">
+                    <div class="employee-form">
+                        <form id="first-edit-form"
+                              asp-action="FirstLoginEdit"
+                              asp-controller="Employees"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" asp-for="Id" />
+
+                            <!-- NAV STEP -->
+                            <ul class="nav wizard-nav" id="emp-steps">
+                                <li class="nav-item">
+                                    <button class="nav-link active" data-step="1" type="button">1. Identitas</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-step="2" type="button">2. Keluarga</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-step="3" type="button">3. Kepegawaian</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-step="4" type="button">4. Pendidikan &amp; Ukuran</button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-step="5" type="button">5. Kontak</button>
+                                </li>
+                            </ul>
+
+                            <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+                            <!-- STEP 1 -->
+                            <div class="emp-step" data-step="1">
+                                <div class="section-label">Identitas Pekerja</div>
+                                <div class="row g-3">
+                                    <div class="col-md-4 col-12">
+                                        <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                                        <input asp-for="NamaLengkap" class="form-control form-control-sm" />
+                                        <span asp-validation-for="NamaLengkap" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-4 col-12">
+                                        <label class="form-label">Nopeg Persero <span class="text-danger">*</span></label>
+                                        <input asp-for="NopegPersero" class="form-control form-control-sm" />
+                                        <span asp-validation-for="NopegPersero" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-4 col-12">
+                                        <label class="form-label">Nopeg KPI</label>
+                                        <input asp-for="NopegKPI" class="form-control form-control-sm" />
+                                    </div>
+
+                                    <div class="col-md-4 col-12">
+                                        <label class="form-label">Jenis Kelamin</label>
+                                        <select asp-for="JenisKelamin" class="form-select form-select-sm">
+                                            <option value="">- pilih -</option>
+                                            <option value="L">L</option>
+                                            <option value="P">P</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-8 col-12">
+                                        <label class="form-label">Jabatan</label>
+                                        <select asp-for="Jabatan" class="form-select form-select-sm select2-tags">
+                                            <option value="">- pilih / ketik -</option>
+                                            @foreach (var j in jabatanList)
+                                            {
+                                                <option value="@j">@j</option>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.Jabatan) && !jabatanList.Contains(Model.Jabatan))
+                                            {
+                                                <option value="@Model.Jabatan">@Model.Jabatan</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6 col-12">
+                                        <label class="form-label">Tempat Lahir</label>
+                                        <input asp-for="TempatLahir" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Tanggal Lahir</label>
+                                        <input asp-for="TanggalLahir" type="date" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Usia (th)</label>
+                                        <input value="@Model.Usia" class="form-control form-control-sm" disabled />
+                                    </div>
+
+                                    <div class="col-12 mb-2">
+                                        <label class="form-label">Alamat Domisili</label>
+                                        <textarea asp-for="AlamatDomisili" rows="2" class="form-control form-control-sm"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- STEP 2 -->
+                            <div class="emp-step d-none" data-step="2">
+                                <div class="section-label">Data Keluarga</div>
+                                <div class="row g-3">
+                                    <div class="col-md-4 col-12">
+                                        <label class="form-label">Status Pernikahan</label>
+                                        <select asp-for="StatusPernikahan" class="form-select form-select-sm select2-tags" id="StatusPernikahan">
+                                            <option value="">- pilih / ketik -</option>
+                                            @foreach (var s in statusList)
+                                            {
+                                                <option value="@s">@s</option>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.StatusPernikahan) && !statusList.Contains(Model.StatusPernikahan))
+                                            {
+                                                <option value="@Model.StatusPernikahan">@Model.StatusPernikahan</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-5 col-12 family-fields">
+                                        <label class="form-label">Nama Suami/Istri</label>
+                                        <input asp-for="NamaSuamiIstri" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-3 col-6 family-fields">
+                                        <label class="form-label">Jumlah Anak</label>
+                                        <input asp-for="JumlahAnak" type="number" class="form-control form-control-sm" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- STEP 3 -->
+                            <div class="emp-step d-none" data-step="3">
+                                <div class="section-label">Kepegawaian</div>
+                                <div class="row g-3">
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Tanggal MPPK</label>
+                                        <input asp-for="TanggalMPPK" type="date" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Tanggal Pensiun</label>
+                                        <input asp-for="TanggalPensiun" type="date" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Intake Pertama</label>
+                                        <input asp-for="IntakePertama" type="date" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Intake Aktif</label>
+                                        <input asp-for="IntakeAktif" type="date" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-4 col-12">
+                                        <label class="form-label">Clustering Intake</label>
+                                        <input asp-for="ClusteringIntake" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-2 col-6">
+                                        <label class="form-label">Masa Kerja (th)</label>
+                                        <input value="@Model.MasaKerjaTahun" class="form-control form-control-sm" disabled />
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Limit Cuti (hari)</label>
+                                        <input asp-for="CutiLimit" type="number" class="form-control form-control-sm" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- STEP 4 -->
+                            <div class="emp-step d-none" data-step="4">
+                                <div class="section-label">Pendidikan &amp; Ukuran</div>
+                                <div class="row g-3">
+                                    <div class="col-md-4 col-12">
+                                        <label class="form-label">Pendidikan Terakhir</label>
+                                        <select asp-for="PendidikanTerakhir" class="form-select form-select-sm select2-tags">
+                                            <option value="">- pilih / ketik -</option>
+                                            @foreach (var p in pendidikanList)
+                                            {
+                                                <option value="@p">@p</option>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.PendidikanTerakhir) && !pendidikanList.Contains(Model.PendidikanTerakhir))
+                                            {
+                                                <option value="@Model.PendidikanTerakhir">@Model.PendidikanTerakhir</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 col-12">
+                                        <label class="form-label">Jurusan</label>
+                                        <select asp-for="Jurusan" class="form-select form-select-sm select2-tags">
+                                            <option value="">- pilih / ketik -</option>
+                                            @foreach (var j in jurusanList)
+                                            {
+                                                <option value="@j">@j</option>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.Jurusan) && !jurusanList.Contains(Model.Jurusan))
+                                            {
+                                                <option value="@Model.Jurusan">@Model.Jurusan</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 col-12">
+                                        <label class="form-label">Institusi</label>
+                                        <select asp-for="Institusi" class="form-select form-select-sm select2-tags">
+                                            <option value="">- pilih / ketik -</option>
+                                            @foreach (var i in institusiList)
+                                            {
+                                                <option value="@i">@i</option>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.Institusi) && !institusiList.Contains(Model.Institusi))
+                                            {
+                                                <option value="@Model.Institusi">@Model.Institusi</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="col-12"></div>
+
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Uk Wearpack</label>
+                                        <select asp-for="UkWearpack" class="form-select form-select-sm select2-tags">
+                                            <option value="">- pilih / ketik -</option>
+                                            @foreach (var v in ukWearpackList)
+                                            {
+                                                <option value="@v">@v</option>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.UkWearpack) && !ukWearpackList.Contains(Model.UkWearpack))
+                                            {
+                                                <option value="@Model.UkWearpack">@Model.UkWearpack</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Uk Kemeja Putih</label>
+                                        <select asp-for="UkKemejaPutih" class="form-select form-select-sm select2-tags">
+                                            <option value="">- pilih / ketik -</option>
+                                            @foreach (var v in ukKemejaPutihList)
+                                            {
+                                                <option value="@v">@v</option>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.UkKemejaPutih) && !ukKemejaPutihList.Contains(Model.UkKemejaPutih))
+                                            {
+                                                <option value="@Model.UkKemejaPutih">@Model.UkKemejaPutih</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-3 col-6">
+                                        <label class="form-label">Uk Kemeja Produk</label>
+                                        <select asp-for="UkKemejaProduk" class="form-select form-select-sm select2-tags">
+                                            <option value="">- pilih / ketik -</option>
+                                            @foreach (var v in ukKemejaProdukList)
+                                            {
+                                                <option value="@v">@v</option>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.UkKemejaProduk) && !ukKemejaProdukList.Contains(Model.UkKemejaProduk))
+                                            {
+                                                <option value="@Model.UkKemejaProduk">@Model.UkKemejaProduk</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-3 col-6 mb-2">
+                                        <label class="form-label">Uk Sepatu Safety</label>
+                                        <select asp-for="UkSepatuSafety" class="form-select form-select-sm select2-tags">
+                                            <option value="">- pilih / ketik -</option>
+                                            @foreach (var v in ukSepatuSafetyList)
+                                            {
+                                                <option value="@v">@v</option>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(Model.UkSepatuSafety) && !ukSepatuSafetyList.Contains(Model.UkSepatuSafety))
+                                            {
+                                                <option value="@Model.UkSepatuSafety">@Model.UkSepatuSafety</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- STEP 5 -->
+                            <div class="emp-step d-none" data-step="5">
+                                <div class="section-label">Kontak</div>
+                                <div class="row g-3 mb-2">
+                                    <div class="col-md-6 col-12">
+                                        <label class="form-label">Email Pertamina</label>
+                                        <input asp-for="EmailPertamina" class="form-control form-control-sm" />
+                                        <span asp-validation-for="EmailPertamina" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-3 col-12">
+                                        <label class="form-label">Nomor HP</label>
+                                        <input asp-for="NomorHP" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="col-md-3 col-12">
+                                        <label class="form-label">Telepon Rumah</label>
+                                        <input asp-for="NomorTeleponRumah" class="form-control form-control-sm" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- FOOTER BUTTONS -->
+                            <div class="emp-page-actions d-flex justify-content-between align-items-center mt-3 gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm btn-prev">
+                                    &lt; Sebelumnya
+                                </button>
+
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary btn-sm btn-next">
+                                        Selanjutnya &gt;
+                                    </button>
+                                    <button type="submit" class="btn btn-success btn-sm btn-submit d-none">
+                                        <i class="bi bi-check-lg"></i> Simpan &amp; Lanjut
+                                    </button>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const $form = $('#first-edit-form');
+            const $steps = $('.emp-step');
+            const $tabs = $('#emp-steps .nav-link');
+            let current = 1;
+
+            if ($.validator && $.validator.unobtrusive) {
+                $.validator.unobtrusive.parse($form);
+            }
+
+            function showStep(step) {
+                current = step;
+                $steps.addClass('d-none');
+                $steps.filter('[data-step="' + step + '"]').removeClass('d-none');
+
+                $tabs.removeClass('active');
+                $tabs.filter('[data-step="' + step + '"]').addClass('active');
+
+                $('.btn-prev').prop('disabled', step === 1);
+                $('.btn-next').toggleClass('d-none', step === 5);
+                $('.btn-submit').toggleClass('d-none', step !== 5);
+            }
+
+            $tabs.on('click', function () {
+                const step = parseInt($(this).data('step'));
+                showStep(step);
+            });
+
+            $('.btn-prev').on('click', function () {
+                if (current > 1) showStep(current - 1);
+            });
+
+            $('.btn-next').on('click', function () {
+                if (current < 5) showStep(current + 1);
+            });
+
+            showStep(1);
+
+            // SELECT2 TAGS
+            $form.find('.select2-tags').each(function () {
+                $(this).select2({
+                    tags: true,
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    dropdownParent: $(document.body)
+                });
+            });
+
+            // TOGGLE FIELD KELUARGA
+            const $status = $('#StatusPernikahan');
+            const $familyFields = $form.find('.family-fields');
+
+            function normalize(val) {
+                return (val || '').toString().trim().toLowerCase();
+            }
+
+            function isBelumMenikah(val) {
+                const v = normalize(val);
+                return v === 'belum menikah' || v === 'single' || v === 'lajang';
+            }
+
+            function updateFamilyFields() {
+                const val = $status.val();
+                if (isBelumMenikah(val)) {
+                    $familyFields.addClass('d-none');
+                    $form.find('[name="NamaSuamiIstri"]').val('');
+                    $form.find('[name="JumlahAnak"]').val('');
+                } else {
+                    $familyFields.removeClass('d-none');
+                }
+            }
+
+            $status.on('change', updateFamilyFields);
+            updateFamilyFields();
+        })();
+    </script>
+}

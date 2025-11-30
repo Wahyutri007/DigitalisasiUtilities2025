@@ -1,0 +1,854 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model IEnumerable<UtilitiesHR.Models.Sertifikasi>
+@using UtilitiesHR.Models
+@using System.Linq
+
+@{
+    ViewData["Title"] = "Sertifikasi Pekerja";
+
+    var employeeId = Context.Request.Query["employeeId"].ToString();
+    var q = Context.Request.Query["q"].ToString();
+
+    var src = Model ?? Enumerable.Empty<Sertifikasi>();
+
+    var canManageSertifikasi = User.IsInRole("Admin")
+        || User.IsInRole("SuperAdmin")
+        || User.IsInRole("Supervisor");
+
+    var currentEmployeeId = ViewBag.CurrentEmployeeId as long? ?? 0L;
+    var currentEmployeeName = ViewBag.CurrentEmployeeName as string ?? "";
+
+    var grouped = src
+        .GroupBy(s => new
+        {
+            s.EmployeeId,
+            Nama = s.Employee?.NamaLengkap ?? "(tanpa nama)",
+            Nopeg = s.Employee?.NopegPersero ?? "-"
+        })
+        .Select(g => new
+        {
+            g.Key.EmployeeId,
+            g.Key.Nama,
+            g.Key.Nopeg,
+            Total = g.Count(),
+            Expired = g.Count(x => x.IsExpired),
+            Aktif = g.Count(x => !x.IsExpired)
+        })
+        .OrderBy(x => x.Nama)
+        .ToList();
+
+    bool isDetailMode = !string.IsNullOrWhiteSpace(employeeId);
+    var showActions = canManageSertifikasi || currentEmployeeId > 0;
+
+    // KPI SUMMARY (berdasarkan data yang sudah ter-filter di controller)
+    var totalSertifikasi = src.Count();
+    var totalAktif = src.Count(s => !s.IsExpired);
+    var totalExpired = src.Count(s => s.IsExpired);
+}
+
+<form id="token-form" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+<style>
+    /* ===== HEADER ACTIONS (SAMA DENGAN PEKERJA / USERS) ===== */
+    .feature-header-actions {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        flex-wrap: wrap;
+    }
+
+        .feature-header-actions .btn {
+            min-width: 40px;
+            border-radius: 999px;
+            padding-inline: 1.0rem;
+            font-size: .78rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .feature-header-actions .btn i {
+                font-size: .9rem;
+            }
+
+    .btn-pill-outline {
+        background: #ffffff;
+        border-radius: 999px;
+        border: 1px solid #d0d7e6;
+        color: #0f172a;
+    }
+
+        .btn-pill-outline i {
+            color: #0a5db0;
+        }
+
+        .btn-pill-outline:hover {
+            background: #f3f6fb;
+            border-color: #c3cce3;
+        }
+
+    .btn-pill-primary {
+        border-radius: 999px;
+        background: #0f7bd9;
+        border-color: #0f7bd9;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+    }
+
+        .btn-pill-primary:hover {
+            background: #0a5db0;
+            border-color: #0a5db0;
+        }
+
+        .btn-pill-primary i {
+            color: #ffffff;
+        }
+
+    @@media (max-width: 575.98px) {
+        .feature-header-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+            .feature-header-actions .btn span {
+                display: none !important; /* di HP cuma icon */
+            }
+
+            .feature-header-actions .btn {
+                padding-inline: .6rem;
+            }
+    }
+
+    /* ===== CARD WRAPPER TABEL (mirip Pekerja) ===== */
+    .sertif-table-wrapper {
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 32px rgba(15,23,42,.06);
+        padding: 1.2rem 1.4rem;
+        background: #ffffff;
+    }
+
+    .sertif-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-bottom: 0;
+    }
+
+        .sertif-table thead th {
+            background-color: #f3f6fb;
+            color: #1f2937;
+            font-weight: 600;
+            font-size: .8rem;
+            padding: .7rem 1rem;
+            border-bottom: 2px solid #e1e6f0 !important;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .sertif-table tbody td {
+            padding: .65rem 1rem;
+            border-bottom: 1px solid #eef1f7;
+            vertical-align: middle;
+            font-size: .8rem;
+        }
+
+        .sertif-table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        .sertif-table tbody tr:nth-child(even) {
+            background-color: #f9fafc;
+        }
+
+        .sertif-table tbody tr:hover {
+            background-color: #edf4ff;
+        }
+
+    .sertif-table-wrapper .dataTables_length select {
+        border-radius: 999px;
+    }
+
+    .sertif-table-wrapper .dataTables_filter input {
+        border-radius: 999px;
+    }
+
+    .sertif-table-wrapper .dataTables_info {
+        font-size: .8rem;
+    }
+
+    .sertif-table-wrapper .dataTables_paginate .page-link {
+        border-radius: 999px !important;
+    }
+
+    /* ===== AKSI DI TABEL (bundar, sama gaya Employees) ===== */
+    .table-actions {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: nowrap;
+        gap: .4rem;
+        white-space: nowrap;
+    }
+
+    .table-action-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        font-size: 14px;
+        padding: 0;
+        box-shadow: 0 2px 6px rgba(15,23,42,.12);
+        transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+    }
+
+        .table-action-btn i {
+            font-size: 15px;
+        }
+
+        .table-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(15,23,42,.16);
+        }
+
+    .table-action-view {
+        background: #e0f2fe;
+        color: #0a5db0;
+    }
+
+    .table-action-edit {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .table-action-delete {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .table-action-view:hover {
+        background: #bae6fd;
+    }
+
+    .table-action-edit:hover {
+        background: #fde68a;
+    }
+
+    .table-action-delete:hover {
+        background: #fecaca;
+    }
+
+    .table-action-btn:focus {
+        outline: 2px solid rgba(15,123,217,.35);
+        outline-offset: 1px;
+    }
+
+    /* ===== KPI SUMMARY CARDS (dipakai HANYA di detail mode) ===== */
+    .sertif-kpi-row {
+        margin-bottom: 0.75rem;
+    }
+
+    .sertif-kpi-card {
+        border-radius: 22px;
+        background: #ffffff;
+        box-shadow: 0 18px 45px rgba(15,23,42,.08);
+        padding: 0.85rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .sertif-kpi-text {
+        display: flex;
+        flex-direction: column;
+        gap: .1rem;
+    }
+
+    .sertif-kpi-title {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: #6b7280;
+    }
+
+    .sertif-kpi-value {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #1d4ed8;
+        margin: 0;
+    }
+
+    .sertif-kpi-sub {
+        font-size: .8rem;
+        color: #9ca3af;
+        margin: 0;
+    }
+
+    .sertif-kpi-icon-wrap {
+        position: relative;
+        padding-top: .25rem;
+    }
+
+    .sertif-kpi-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        box-shadow: 0 10px 25px rgba(15,23,42,.18);
+    }
+
+    .kpi-total .sertif-kpi-icon {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: #eff6ff;
+    }
+
+    .kpi-aktif .sertif-kpi-icon {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: #ecfdf5;
+    }
+
+    .kpi-expired .sertif-kpi-icon {
+        background: linear-gradient(135deg, #f97373, #ef4444);
+        color: #fef2f2;
+    }
+
+    .kpi-aktif .sertif-kpi-value {
+        color: #16a34a;
+    }
+
+    .kpi-expired .sertif-kpi-value {
+        color: #ef4444;
+    }
+
+    @@media (max-width: 767.98px) {
+        .sertif-kpi-card {
+            margin-bottom: .25rem;
+        }
+    }
+</style>
+
+@* ====== TOMBOL AKSI DI KANAN BREADCRUMB (HEADER GLOBAL) ====== *@
+@section PageActions {
+    <div class="feature-header-actions">
+        @if (canManageSertifikasi)
+        {
+            <button class="btn btn-pill-outline" id="btn-import-modal" title="Import Data">
+                <i class="bi bi-file-earmark-arrow-up me-1"></i>
+                <span class="d-none d-md-inline">Import</span>
+            </button>
+        }
+
+        <div class="btn-group">
+            <button class="btn btn-pill-outline dropdown-toggle"
+                    data-bs-toggle="dropdown"
+                    type="button">
+                <i class="bi bi-download me-1"></i>
+                <span class="d-none d-md-inline">Template &amp; Export</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                @if (canManageSertifikasi)
+                {
+                    <li class="dropdown-header">Template Import</li>
+                    <li>
+                        <a class="dropdown-item" href="@Url.Action("DownloadTemplateExcel")">
+                            <i class="bi bi-file-earmark-excel me-1"></i>Template Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="@Url.Action("DownloadTemplateCsv")">
+                            <i class="bi bi-filetype-csv me-1"></i>Template CSV
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider" /></li>
+                }
+
+                <li class="dropdown-header">Export Data (sesuai filter)</li>
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("ExportExcel", new { employeeId, q })">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export Excel
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("ExportCsv", new { employeeId, q })">
+                        <i class="bi bi-filetype-csv me-1"></i>Export CSV
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button class="btn btn-pill-primary"
+                id="btn-create-modal"
+                data-employee-id="@(canManageSertifikasi? employeeId : (currentEmployeeId > 0 ? currentEmployeeId.ToString() : ""))"
+                title="Input Data Sertifikasi">
+            <i class="bi bi-plus-lg me-1"></i>
+            <span class="d-none d-md-inline">Input Data Sertifikasi</span>
+        </button>
+    </div>
+}
+
+@* ====== KPI CARDS – HANYA SAAT DETAIL MODE (employeeId ada) ====== *@
+@if (isDetailMode)
+{
+    <div class="sertif-kpi-row row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="sertif-kpi-card kpi-total">
+                <div class="sertif-kpi-text">
+                    <p class="sertif-kpi-title mb-0">TOTAL SERTIFIKASI</p>
+                    <p class="sertif-kpi-value">@totalSertifikasi</p>
+                    <p class="sertif-kpi-sub">Semua sertifikasi pekerja ini</p>
+                </div>
+                <div class="sertif-kpi-icon-wrap">
+                    <div class="sertif-kpi-icon">
+                        <i class="bi bi-award"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="sertif-kpi-card kpi-aktif">
+                <div class="sertif-kpi-text">
+                    <p class="sertif-kpi-title mb-0">SERTIFIKASI AKTIF</p>
+                    <p class="sertif-kpi-value">@totalAktif</p>
+                    <p class="sertif-kpi-sub">Masih berlaku sampai hari ini</p>
+                </div>
+                <div class="sertif-kpi-icon-wrap">
+                    <div class="sertif-kpi-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="sertif-kpi-card kpi-expired">
+                <div class="sertif-kpi-text">
+                    <p class="sertif-kpi-title mb-0">SERTIFIKASI EXPIRED</p>
+                    <p class="sertif-kpi-value">@totalExpired</p>
+                    <p class="sertif-kpi-sub">Sertifikasi yang sudah tidak berlaku</p>
+                </div>
+                <div class="sertif-kpi-icon-wrap">
+                    <div class="sertif-kpi-icon">
+                        <i class="bi bi-x-octagon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* ================== TABEL RINGKASAN / DETAIL ================== *@
+@if (!isDetailMode)
+{
+    <!-- RINGKASAN PER PEKERJA -->
+    <div class="sertif-table-wrapper">
+        <div class="table-responsive">
+            <table id="tbl-ringkasan" class="table sertif-table align-middle w-100">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width:40px;">No</th>
+                        <th>Nama</th>
+                        <th>Nopeg</th>
+                        <th class="text-center">Jumlah Diambil</th>
+                        <th class="text-center">Sudah Expired</th>
+                        <th class="text-center">Masih Berlaku</th>
+                        <th class="text-center" data-priority="1">Detail</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in grouped)
+                    {
+                        <tr>
+                            <td class="text-center"></td>
+                            <td>@r.Nama</td>
+                            <td>@r.Nopeg</td>
+                            <td class="text-center">@r.Total</td>
+                            <td class="text-center">@r.Expired</td>
+                            <td class="text-center">@r.Aktif</td>
+                            <td class="text-center text-nowrap">
+                                <div class="table-actions">
+                                    <a class="table-action-btn table-action-view"
+                                       asp-action="Index"
+                                       asp-route-employeeId="@r.EmployeeId"
+                                       asp-route-q="@q"
+                                       title="Lihat Detail Sertifikasi">
+                                        <i class="bi bi-search"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <!-- DETAIL PER SERTIFIKASI -->
+    <div class="sertif-table-wrapper">
+        <div class="table-responsive">
+            <table id="tbl-detail" class="table sertif-table align-middle w-100">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width:40px;">No</th>
+                        <th>Nama</th>
+                        <th>Nopeg</th>
+                        <th>Sertifikasi</th>
+                        <th>Periode</th>
+                        <th class="text-center">Status</th>
+                        <th>Lokasi</th>
+                        <th>Keterangan</th>
+                        @if (showActions)
+                        {
+                            <th class="text-center" data-priority="1" style="width:140px;">Aksi</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in src)
+                    {
+                        var canEditRow = canManageSertifikasi || (currentEmployeeId > 0 && s.EmployeeId == currentEmployeeId);
+
+                        <tr data-id="@s.Id">
+                            <td class="text-center"></td>
+                            <td>@s.Employee?.NamaLengkap</td>
+                            <td>@s.Employee?.NopegPersero</td>
+                            <td>@(s.MasterSertifikasi?.Nama ?? s.NamaSertifikasi)</td>
+                            <td>@s.BerlakuDari?.ToString("yyyy-MM-dd") – @s.BerlakuSampai?.ToString("yyyy-MM-dd")</td>
+                            <td class="text-center">
+                                @if (s.IsExpired)
+                                {
+                                    <span class="badge bg-danger">Expired</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Aktif</span>
+                                }
+                            </td>
+                            <td>@s.Lokasi</td>
+                            <td>@s.Keterangan</td>
+
+                            @if (showActions)
+                            {
+                                <td class="text-center text-nowrap">
+                                    @if (canEditRow)
+                                    {
+                                        <div class="table-actions">
+                                            <!-- DETAIL (modal) -->
+                                            <button type="button"
+                                                    class="table-action-btn table-action-view btn-detail"
+                                                    data-id="@s.Id"
+                                                    title="Detail">
+                                                <i class="bi bi-info-circle"></i>
+                                            </button>
+
+                                            <!-- EDIT (modal) -->
+                                            <button type="button"
+                                                    class="table-action-btn table-action-edit btn-edit"
+                                                    data-id="@s.Id"
+                                                    title="Edit">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+
+                                            @if (canManageSertifikasi)
+                                            {
+                                                <!-- DELETE (ajax) -->
+                                                <button type="button"
+                                                        class="table-action-btn table-action-delete btn-delete"
+                                                        data-id="@s.Id"
+                                                        data-nama="@(s.MasterSertifikasi?.Nama ?? s.NamaSertifikasi)"
+                                                        title="Hapus">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<div class="modal fade" id="ajax-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ajax-modal-title">Modal</h5>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            const $ajaxModal = $('#ajax-modal');
+            const $modalBody = $ajaxModal.find('.modal-body');
+            const $modalTitle = $ajaxModal.find('.modal-title');
+
+            const params = new URLSearchParams(window.location.search);
+            const employeeId = params.get('employeeId');
+            if (employeeId) {
+                $('select[name="employeeId"]').val(employeeId);
+            }
+
+            if ($('select[name="employeeId"]').length) {
+                $('select[name="employeeId"]').select2({
+                    theme: 'bootstrap-5'
+                });
+            }
+
+            const lang = {
+                search: "Cari:",
+                lengthMenu: "Tampil _MENU_ baris",
+                info: "Menampilkan _START_–_END_ dari _TOTAL_ data",
+                infoEmpty: "Tidak ada data",
+                zeroRecords: "Tidak ditemukan data yang cocok",
+                paginate: { first: "<<", last: ">>", next: ">", previous: "<" }
+            };
+
+            const domLayout =
+                "<'row g-2 mb-2'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                "<'row'<'col-sm-12'tr>>" +
+                "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>";
+
+            // RINGKASAN
+            let ringkasanTable = null;
+            if ($('#tbl-ringkasan').length) {
+                ringkasanTable = $('#tbl-ringkasan').DataTable({
+                    responsive: true,
+                    dom: domLayout,
+                    order: [[1, 'asc']],
+                    pageLength: 10,
+                    lengthMenu: [10, 25, 50, 100],
+                    language: lang,
+                    columnDefs: [
+                        { targets: [0, 6], orderable: false, searchable: false }
+                    ]
+                });
+
+                ringkasanTable.on('draw.dt', function () {
+                    const info = ringkasanTable.page.info();
+                    ringkasanTable.column(0, { search: 'applied', order: 'applied' })
+                        .nodes()
+                        .each(function (cell, i) {
+                            cell.innerHTML = info.start + i + 1;
+                        });
+                }).draw();
+            }
+
+            // DETAIL
+            let detailTable = null;
+            if ($('#tbl-detail').length) {
+                const columnDefsDetail = @Html.Raw(
+                                                                    showActions
+                                                                                    ? "[{ targets: 0, orderable: false, searchable: false }, { targets: -1, orderable: false, searchable: false }]"
+                                                                                    : "[{ targets: 0, orderable: false, searchable: false }]"
+                                                    );
+
+            detailTable = $('#tbl-detail').DataTable({
+                responsive: true,
+                dom: domLayout,
+                order: [[4, 'desc']],
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
+                language: lang,
+                columnDefs: columnDefsDetail
+            });
+
+                detailTable.on('draw.dt', function () {
+                    const info = detailTable.page.info();
+                    detailTable.column(0, { search: 'applied', order: 'applied' })
+                        .nodes()
+                        .each(function (cell, i) {
+                            cell.innerHTML = info.start + i + 1;
+                        });
+                }).draw();
+            }
+
+            // OPEN MODAL CREATE
+            $('#btn-create-modal').on('click', function () {
+                const empId = $(this).data('employee-id') || '';
+                $modalTitle.text('Input Data Sertifikasi');
+
+                $modalBody.html("<div class='py-4 text-center text-muted small'>Memuat formulir…</div>");
+                $modalBody.load('@Url.Action("Create")?employeeId=' + empId, function () {
+                    $ajaxModal.modal('show');
+                });
+            });
+
+            // IMPORT
+            $('#btn-import-modal').on('click', function () {
+                $modalTitle.text('Import Data Sertifikasi');
+                $modalBody.html("<div class='py-4 text-center text-muted small'>Memuat formulir…</div>");
+                $modalBody.load('@Url.Action("Import")', function () {
+                    $ajaxModal.modal('show');
+                });
+            });
+
+            // DETAIL (popup)
+            $('body').on('click', '.btn-detail', function () {
+                const id = $(this).data('id');
+                $modalTitle.text('Detail Sertifikasi');
+                $modalBody.html("<div class='py-4 text-center text-muted small'>Memuat data…</div>");
+                $modalBody.load('@Url.Action("Details")/' + id, function () {
+                    $ajaxModal.modal('show');
+                });
+            });
+
+            // EDIT (popup)
+            $('body').on('click', '.btn-edit', function () {
+                const id = $(this).data('id');
+                $modalTitle.text('Edit Data Sertifikasi');
+                $modalBody.html("<div class='py-4 text-center text-muted small'>Memuat formulir…</div>");
+                $modalBody.load('@Url.Action("Edit")/' + id, function () {
+                    $ajaxModal.modal('show');
+                });
+            });
+
+            // SUBMIT CREATE/EDIT
+            $('body').on('submit', '#ajax-form', function (e) {
+                e.preventDefault();
+                const $form = $(this);
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    success: function (response) {
+                        if (response && response.success) {
+                            $ajaxModal.modal('hide');
+                            Swal.fire('Berhasil', response.message, 'success')
+                                .then(() => window.location.reload());
+                        } else if (response) {
+                            let errorMsg = (response.message || 'Data tidak valid.') + "<ul class='text-start mt-2'>";
+                            (response.errors || []).forEach(err => {
+                                errorMsg += `<li>${err}</li>`;
+                            });
+                            errorMsg += "</ul>";
+                            Swal.fire({ title: 'Gagal', html: errorMsg, icon: 'error' });
+                        } else {
+                            Swal.fire('Error', 'Respon server tidak dikenal.', 'error');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                    }
+                });
+            });
+
+            // SUBMIT IMPORT
+            $('body').on('submit', '#import-form', function (e) {
+                e.preventDefault();
+
+                const $form = $(this);
+                const token =
+                    $form.find('input[name="__RequestVerificationToken"]').val()
+                    || $('#token-form').find('input[name="__RequestVerificationToken"]').val();
+
+                const formData = new FormData(this);
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: $form.attr('method') || 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: token ? { 'RequestVerificationToken': token } : {},
+                    success: function (res) {
+                        if (res && res.success) {
+                            $ajaxModal.modal('hide');
+                            Swal.fire('Berhasil', res.message, 'success')
+                                .then(() => window.location.reload());
+                        } else if (res) {
+                            let msg = res.message || 'Import gagal.';
+                            if (res.errors && res.errors.length) {
+                                msg += "<ul class='text-start mt-2'>";
+                                res.errors.forEach(e => msg += `<li>${e}</li>`);
+                                msg += "</ul>";
+                            }
+                            Swal.fire({ title: 'Gagal', html: msg, icon: 'error' });
+                        } else {
+                            Swal.fire('Error', 'Respon server tidak dikenal.', 'error');
+                        }
+                    },
+                    error: function (xhr) {
+                        let msg = 'Terjadi kesalahan server saat import.';
+                        if (xhr.status === 400) {
+                            msg = 'Request tidak valid atau token keamanan kadaluarsa. Silakan refresh halaman lalu coba import lagi.';
+                        }
+                        Swal.fire('Error', msg, 'error');
+                    }
+                });
+            });
+
+            // DELETE
+            $('body').on('click', '.btn-delete', function (e) {
+                e.preventDefault();
+                const $button = $(this);
+                const id = $button.data('id');
+                const nama = $button.data('nama');
+                const token = $('#token-form').find('input[name="__RequestVerificationToken"]').val();
+
+                Swal.fire({
+                    title: 'Anda yakin?',
+                    text: `Data sertifikasi "${nama}" akan dihapus permanen.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonText: 'Batal',
+                    confirmButtonText: 'Ya, hapus!'
+                }).then((result) => {
+                    if (!result.isConfirmed) return;
+
+                    $.ajax({
+                        url: '@Url.Action("Delete")/' + id,
+                        type: 'POST',
+                        data: {
+                            "__RequestVerificationToken": token,
+                            "id": id
+                        },
+                        success: function (response) {
+                            if (response && response.success) {
+                                Swal.fire('Dihapus!', response.message, 'success');
+                                if (detailTable) {
+                                    detailTable.row($button.closest('tr')).remove().draw();
+                                } else if (ringkasanTable) {
+                                    ringkasanTable.row($button.closest('tr')).remove().draw();
+                                } else {
+                                    window.location.reload();
+                                }
+                            } else {
+                                Swal.fire('Gagal!', response.message || 'Gagal menghapus data.', 'error');
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}

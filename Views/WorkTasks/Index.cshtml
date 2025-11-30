@@ -1,0 +1,712 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@using System.Linq
+@using UtilitiesHR.Models
+@model IEnumerable<UtilitiesHR.Models.WorkTask>
+
+@{
+    ViewData["Title"] = "Outstanding Pekerjaan";
+    ViewData["Breadcrumb"] = "Outstanding Pekerjaan";
+
+    var tasks = Model ?? Enumerable.Empty<WorkTask>();
+
+    var groups = tasks
+        .GroupBy(t => string.IsNullOrWhiteSpace(t.NamaPIC) ? "(Belum ada PIC)" : t.NamaPIC!.Trim())
+        .OrderBy(g => g.Key)
+        .ToList();
+
+    int totalTasks = ViewBag.TotalTasks as int? ?? tasks.Count();
+    int pendingTasks = ViewBag.PendingTasks as int? ?? tasks.Count(t => t.Status == WorkTaskStatus.Pending);
+    int inProgressTasks = ViewBag.InProgressTasks as int? ?? tasks.Count(t => t.Status == WorkTaskStatus.InProgress);
+    int doneTasks = ViewBag.DoneTasks as int? ?? tasks.Count(t => t.Status == WorkTaskStatus.Done);
+}
+
+<form id="afTokenForm" style="display:none">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.7/css/dataTables.bootstrap5.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.css" />
+    <!-- Select2 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" />
+
+    <style>
+        .wt-wrapper {
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 32px rgba(15,23,42,.06);
+            padding: 1.2rem 1.4rem;
+            background: #fff;
+        }
+
+        .wt-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+
+            .wt-table thead th {
+                background-color: #f3f6fb;
+                color: #1f2937;
+                font-weight: 600;
+                font-size: .8rem;
+                padding: .7rem 1rem;
+                border-bottom: 2px solid #e1e6f0 !important;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+
+            .wt-table tbody td {
+                padding: .65rem 1rem;
+                border-bottom: 1px solid #eef1f7;
+                vertical-align: middle;
+                font-size: .8rem;
+            }
+
+            .wt-table tbody tr:nth-child(odd) { background:#fff; }
+            .wt-table tbody tr:nth-child(even){ background:#f9fafc; }
+            .wt-table tbody tr:hover        { background:#edf4ff; }
+
+        .feature-header-actions{
+            display:flex;
+            align-items:center;
+            gap:.5rem;
+            flex-wrap:wrap;
+        }
+        .feature-header-actions .btn{
+            min-width:40px;
+            border-radius:999px;
+            padding-inline:1rem;
+            font-size:.78rem;
+            font-weight:500;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .feature-header-actions .btn i{ font-size:.9rem; }
+
+        .btn-pill-outline{
+            background:#fff;
+            border-radius:999px;
+            border:1px solid #d0d7e6;
+            color:#0f172a;
+        }
+        .btn-pill-outline i{ color:#0a5db0; }
+        .btn-pill-outline:hover{
+            background:#f3f6fb;
+            border-color:#c3cce3;
+        }
+
+        .btn-pill-primary{
+            border-radius:999px;
+            background:#0f7bd9;
+            border-color:#0f7bd9;
+            color:#fff;
+            box-shadow:0 4px 12px rgba(15,123,217,.35);
+        }
+        .btn-pill-primary:hover{
+            background:#0a5db0;
+            border-color:#0a5db0;
+        }
+        .btn-pill-primary i{ color:#fff; }
+
+        .wt-summary-card{
+            border-radius:14px;
+            border:1px solid #e2e8f0;
+            background:#fff;
+            padding:.8rem 1rem;
+            box-shadow:0 6px 18px rgba(15,23,42,.04);
+            height:100%;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:.75rem;
+        }
+        .wt-summary-main{
+            display:flex;
+            flex-direction:column;
+            gap:.15rem;
+        }
+        .wt-summary-label{
+            font-size:.7rem;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+            color:#6b7280;
+        }
+        .wt-summary-value{
+            font-size:1.1rem;
+            font-weight:600;
+            color:#111827;
+        }
+        .wt-summary-sub{
+            font-size:.75rem;
+            color:#6b7280;
+        }
+        .wt-summary-icon{
+            width:30px;
+            height:30px;
+            border-radius:999px;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            background:#e5f0ff;
+            color:#0f7bd9;
+            font-size:1rem;
+        }
+        .wt-summary-icon.pending{
+            background:#fee2e2;
+            color:#b91c1c;
+        }
+        .wt-summary-icon.progress{
+            background:#fef3c7;
+            color:#92400e;
+        }
+        .wt-summary-icon.done{
+            background:#dcfce7;
+            color:#166534;
+        }
+
+        /* ==== BADGE: SAMA DENGAN BY PIC ==== */
+        .wt-badge-table {
+            border-radius: 999px;
+            padding: .1rem .5rem;
+            font-size: .7rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: .25rem;
+        }
+
+        /* Status */
+        .wt-badge-status-pending {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .wt-badge-status-inprogress {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .wt-badge-status-done {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* Prioritas */
+        .wt-badge-prio-low {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        .wt-badge-prio-medium {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        .wt-badge-prio-high {
+            background: #ffedd5;
+            color: #c2410c;
+        }
+        .wt-badge-prio-emergency {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        @@media (max-width:575.98px){
+            .feature-header-actions{
+                width:100%;
+                justify-content:flex-start;
+            }
+            .feature-header-actions .btn span{
+                display:none !important;
+            }
+            .feature-header-actions .btn{
+                padding-inline:.6rem;
+            }
+        }
+    </style>
+}
+
+@section PageActions {
+    <div class="feature-header-actions">
+        <button type="button"
+                id="btn-add-task"
+                class="btn btn-pill-primary">
+            <i class="bi bi-plus-lg me-1"></i>
+            <span class="d-none d-md-inline">Tambah Pekerjaan</span>
+        </button>
+
+        <div class="btn-group">
+            <button class="btn btn-pill-outline dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>
+                <span class="d-none d-md-inline">Template &amp; Export</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("TemplateImport")">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Template Import Excel
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("ExportExcel", new {
+                             pic = ViewBag.qsPic,
+                             status = ViewBag.qsStatus,
+                             priority = ViewBag.qsPriority,
+                             q = ViewBag.qsSearch,
+                             onlyOutstanding = ViewBag.qsOnlyOutstanding
+                        })">
+                        <i class="bi bi-filetype-xlsx me-1"></i> Export Outstanding
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button type="button"
+                id="btn-import-task"
+                class="btn btn-pill-outline">
+            <i class="bi bi-file-earmark-arrow-up me-1"></i>
+            <span class="d-none d-md-inline">Import</span>
+        </button>
+    </div>
+}
+
+<!-- SUMMARY GLOBAL -->
+<div class="row g-3 mb-2">
+    <div class="col-6 col-md-3">
+        <div class="wt-summary-card">
+            <div class="wt-summary-main">
+                <div class="wt-summary-label">Total Pekerjaan</div>
+                <div class="wt-summary-value">@totalTasks</div>
+                <div class="wt-summary-sub">Semua pekerjaan dalam filter ini</div>
+            </div>
+            <div class="wt-summary-icon">
+                <i class="bi bi-kanban"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="wt-summary-card">
+            <div class="wt-summary-main">
+                <div class="wt-summary-label">Pending</div>
+                <div class="wt-summary-value">@pendingTasks</div>
+                <div class="wt-summary-sub">Belum dieksekusi</div>
+            </div>
+            <div class="wt-summary-icon pending">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="wt-summary-card">
+            <div class="wt-summary-main">
+                <div class="wt-summary-label">InProgress</div>
+                <div class="wt-summary-value">@inProgressTasks</div>
+                <div class="wt-summary-sub">On going</div>
+            </div>
+            <div class="wt-summary-icon progress">
+                <i class="bi bi-arrow-repeat"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="wt-summary-card">
+            <div class="wt-summary-main">
+                <div class="wt-summary-label">Done</div>
+                <div class="wt-summary-value">@doneTasks</div>
+                <div class="wt-summary-sub">Sudah closed</div>
+            </div>
+            <div class="wt-summary-icon done">
+                <i class="bi bi-check-circle"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ================= CARD 1: REKAP PER PIC ================= -->
+<div class="wt-wrapper mb-3">
+    <h6 class="mb-3">Rekap Outstanding per PIC</h6>
+
+    <div class="table-responsive">
+        <table id="tbl-pic" class="table wt-table align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:40px;">No</th>
+                    <th>PIC</th>
+                    <th class="text-center">Total</th>
+                    <th class="text-center">Pending</th>
+                    <th class="text-center">InProgres</th>
+                    <th class="text-center">Done</th>
+                    <th class="text-center all" style="width:110px;">Detail</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var no = 1;
+                    foreach (var g in groups)
+                    {
+                        var total = g.Count();
+                        var p = g.Count(t => t.Status == WorkTaskStatus.Pending);
+                        var ip = g.Count(t => t.Status == WorkTaskStatus.InProgress);
+                        var d = g.Count(t => t.Status == WorkTaskStatus.Done);
+                        <tr>
+                            <td class="text-center">@no</td>
+                            <td>@g.Key</td>
+                            <td class="text-center">@total</td>
+                            <td class="text-center">@p</td>
+                            <td class="text-center">@ip</td>
+                            <td class="text-center">@d</td>
+                            <td class="text-center all">
+                                <a asp-action="ByPic"
+                                   asp-route-pic="@g.Key"
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-card-list me-1"></i> Detail
+                                </a>
+                            </td>
+                        </tr>
+                        no++;
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ================= CARD 2: SEMUA DATA PEKERJAAN ================= -->
+<div class="wt-wrapper">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h6 class="mb-0">Daftar Semua Pekerjaan</h6>
+        <div class="form-check form-switch small">
+            <input class="form-check-input" type="checkbox" id="wt-show-done" />
+            <label class="form-check-label" for="wt-show-done">
+                Tampilkan juga pekerjaan <strong>Done</strong>
+            </label>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table id="tbl-all" class="table wt-table align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:40px;">No</th>
+                    <th>Nama Pekerjaan</th>
+                    <th>PIC</th>
+                    <th class="text-center">Start</th>
+                    <th class="text-center">Due</th>
+                    <th class="text-center">Selesai</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Prioritas</th>
+                    <th class="text-center">Progress</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var noAll = 1;
+                    foreach (var t in tasks.OrderBy(t => t.NamaPIC).ThenBy(t => t.NamaPekerjaan))
+                    {
+                        string statusClass = "wt-badge-status-pending";
+                        string statusText = "Pending";
+                        string statusIcon = "bi-hourglass-split";
+
+                        if (t.Status == WorkTaskStatus.InProgress)
+                        {
+                            statusClass = "wt-badge-status-inprogress";
+                            statusText = "In Progress";
+                            statusIcon = "bi-arrow-repeat";
+                        }
+                        else if (t.Status == WorkTaskStatus.Done)
+                        {
+                            statusClass = "wt-badge-status-done";
+                            statusText = "Done";
+                            statusIcon = "bi-check-circle";
+                        }
+
+                        string prioClass = "wt-badge-prio-low";
+                        string prioIcon = "bi-flag";
+                        if (t.Prioritas == WorkTaskPriority.Medium)
+                        {
+                            prioClass = "wt-badge-prio-medium";
+                            prioIcon = "bi-flag";
+                        }
+                        else if (t.Prioritas == WorkTaskPriority.High)
+                        {
+                            prioClass = "wt-badge-prio-high";
+                            prioIcon = "bi-flag-fill";
+                        }
+                        else if (t.Prioritas == WorkTaskPriority.Emergency)
+                        {
+                            prioClass = "wt-badge-prio-emergency";
+                            prioIcon = "bi-exclamation-triangle-fill";
+                        }
+
+                        <tr>
+                            <td class="text-center">@noAll</td>
+                            <td>@t.NamaPekerjaan</td>
+                            <td>@(string.IsNullOrWhiteSpace(t.NamaPIC) ? "(Belum ada PIC)" : t.NamaPIC)</td>
+                            <td class="text-center">@t.StartDate?.ToString("yyyy-MM-dd")</td>
+                            <td class="text-center">@t.DueDate?.ToString("yyyy-MM-dd")</td>
+                            <td class="text-center">@t.CompletedDate?.ToString("yyyy-MM-dd")</td>
+                            <td class="text-center">
+                                <span class="wt-badge-table @statusClass">
+                                    <i class="bi @statusIcon"></i> @statusText
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="wt-badge-table @prioClass">
+                                    <i class="bi @prioIcon"></i> @t.Prioritas
+                                </span>
+                            </td>
+                            <td class="text-center">@t.ProgressPercent %</td>
+                        </tr>
+
+                        noAll++;
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal AJAX -->
+<div class="modal fade" id="ajax-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1px solid #e2e8f0;">
+                <h5 class="modal-title">Form</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center text-muted py-4">
+                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                    <div>Memuat...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/2.0.7/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.0.7/js/dataTables.bootstrap5.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.js"></script>
+
+    <!-- Select2 + validation untuk form modal -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        function getAfToken() {
+            return document.querySelector('#afTokenForm input[name="__RequestVerificationToken"]').value;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const $ = window.jQuery;
+            const modalEl = document.getElementById('ajax-modal');
+            const bsModal = new bootstrap.Modal(modalEl);
+            const $modalBody = $('#ajax-modal .modal-body');
+            const $modalTitle = $('#ajax-modal .modal-title');
+
+            // ====== DataTable REKAP PER PIC ======
+            try {
+                new DataTable('#tbl-pic', {
+                    responsive: true,
+                    pageLength: 25,
+                    order: [[1, 'asc']],
+                    lengthMenu: [10, 25, 50, 100],
+                    language: {
+                        lengthMenu: "Show _MENU_ entries",
+                        search: "Search:",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "Showing 0 to 0 of 0 entries",
+                        zeroRecords: "No matching records found",
+                        paginate: {
+                            first: "<<",
+                            last: ">>",
+                            next: ">",
+                            previous: "<"
+                        }
+                    },
+                    columnDefs: [
+                        { targets: 0, orderable: false, searchable: false },
+                        {
+                            targets: -1,
+                            orderable: false,
+                            searchable: false,
+                            className: 'text-center all',
+                            responsivePriority: 1
+                        }
+                    ]
+                });
+            } catch (e) { console.error(e); }
+
+            // ====== DataTable SEMUA PEKERJAAN ======
+            let tblAll;
+            try {
+                tblAll = new DataTable('#tbl-all', {
+                    responsive: true,
+                    pageLength: 25,
+                    order: [[2, 'asc'], [1, 'asc']], // urut PIC lalu Nama Pekerjaan
+                    lengthMenu: [10, 25, 50, 100],
+                    language: {
+                        lengthMenu: "Show _MENU_ entries",
+                        search: "Search:",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "Showing 0 to 0 of 0 entries",
+                        zeroRecords: "No matching records found",
+                        paginate: {
+                            first: "<<",
+                            last: ">>",
+                            next: ">",
+                            previous: "<"
+                        }
+                    },
+                    columnDefs: [
+                        { targets: 0, orderable: false, searchable: false }
+                    ]
+                });
+
+                // === PENOMORAN ULANG KOLOM "No" ===
+                function renumberAllRows() {
+                    const info = tblAll.page.info();
+                    tblAll
+                        .column(0, { search: 'applied', order: 'applied' })
+                        .nodes()
+                        .each(function (cell, i) {
+                            cell.innerHTML = info.start + i + 1;
+                        });
+                }
+
+                tblAll.on('draw', function () {
+                    renumberAllRows();
+                });
+
+                tblAll.draw();
+            } catch (e) { console.error(e); }
+
+            // ====== Filter: default Pending + In Progress ======
+            if (tblAll) {
+                function applyDoneFilter(includeDone) {
+                    // kolom Status index 6, isi HTML badge -> pakai regex yang cari teks
+                    if (includeDone) {
+                        tblAll.column(6).search('', true, false); // semua status
+                    } else {
+                        tblAll.column(6).search('Pending|In Progress', true, false);
+                    }
+                    tblAll.draw();
+                }
+
+                // default: hanya Pending & In Progress
+                applyDoneFilter(false);
+
+                $('#wt-show-done').on('change', function () {
+                    applyDoneFilter($(this).is(':checked'));
+                });
+            }
+
+            // ====== Tambah pekerjaan (modal Create general) ======
+            $('#btn-add-task').on('click', function () {
+                $modalTitle.text('Tambah Pekerjaan');
+                $modalBody.html(
+                    '<div class="text-center py-4 text-muted">' +
+                    '<div class="spinner-border spinner-border-sm mb-2"></div>' +
+                    '<div>Memuat...</div>' +
+                    '</div>');
+                bsModal.show();
+
+                $.get('@Url.Action("Create")', function (html) {
+                    $modalBody.html(html);
+                });
+            });
+
+            // ====== Import via modal ======
+            $('#btn-import-task').on('click', function () {
+                const formHtml =
+                    `<form id="wt-import-form" method="post" enctype="multipart/form-data" action="@Url.Action("Import")">
+                        <input type="hidden" name="__RequestVerificationToken" value="${getAfToken()}" />
+                        <div class="mb-3">
+                            <label class="form-label">File Excel (.xlsx)</label>
+                            <input class="form-control" type="file" name="file" accept=".xlsx" required />
+                            <div class="form-text">Gunakan template yang sudah disediakan.</div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary">Import</button>
+                        </div>
+                    </form>`;
+
+                $modalTitle.text('Import Outstanding Pekerjaan');
+                $modalBody.html(formHtml);
+                bsModal.show();
+            });
+
+            // ====== Submit import ======
+            $(document).on('submit', '#wt-import-form', function (e) {
+                e.preventDefault();
+                const form = this;
+                const fd = new FormData(form);
+
+                $.ajax({
+                    url: form.action,
+                    type: 'POST',
+                    data: fd,
+                    processData: false,
+                    contentType: false
+                }).done(function (resp) {
+                    if (resp && resp.success) {
+                        bsModal.hide();
+                        Swal.fire('Berhasil', resp.message || 'Import berhasil.', 'success')
+                            .then(() => location.reload());
+                    } else {
+                        Swal.fire('Gagal', (resp && resp.message) || 'Import gagal.', 'error');
+                    }
+                }).fail(function () {
+                    Swal.fire('Gagal', 'Terjadi kesalahan server saat import.', 'error');
+                });
+            });
+
+            // ====== Submit CREATE/EDIT dari modal ======
+            $(document).on('submit', '#ajax-form', function (e) {
+                e.preventDefault();
+
+                const $form = $(this);
+                if ($form.valid && !$form.valid()) {
+                    return;
+                }
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: $form.attr('method') || 'POST',
+                    data: $form.serialize()
+                }).done(function (resp) {
+                    if (resp && resp.success) {
+                        bsModal.hide();
+
+                        if (window.Swal) {
+                            Swal.fire('Berhasil', resp.message || 'Data pekerjaan berhasil disimpan.', 'success')
+                                .then(function () {
+                                    window.location.reload();
+                                });
+                        } else {
+                            window.location.reload();
+                        }
+                    } else {
+                        const msg = (resp && resp.message) || 'Terjadi kesalahan saat menyimpan data.';
+                        if (window.Swal) {
+                            Swal.fire('Gagal', msg, 'error');
+                        } else {
+                            alert(msg);
+                        }
+                    }
+                }).fail(function () {
+                    if (window.Swal) {
+                        Swal.fire('Gagal', 'Terjadi kesalahan server.', 'error');
+                    } else {
+                        alert('Terjadi kesalahan server.');
+                    }
+                });
+            });
+        });
+    </script>
+}

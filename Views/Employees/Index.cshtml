@@ -1,0 +1,569 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model List<UtilitiesHR.Models.Employee>
+
+@{
+    ViewData["Title"] = "Pekerja";
+    ViewData["Breadcrumb"] = "Pekerja";
+
+    // Role logic
+    bool isAdminLike = User.IsInRole("Admin")
+                       || User.IsInRole("SuperAdmin")
+                       || User.IsInRole("Supervisor");
+    bool isUserRole = User.IsInRole("User");
+
+    // Admin-like yang boleh kelola full (Create/Import/Delete)
+    bool canManageEmployees = isAdminLike;
+
+    // Ambil FirstEditId dari ViewBag (di-set dari EmployeesController.Index)
+    int firstEditId = 0;
+    if (ViewBag.FirstEditId != null)
+    {
+        firstEditId = (int)ViewBag.FirstEditId;
+    }
+
+    // Ambil EmployeeId user aktif dari ViewBag (di-set di controller)
+    int currentEmpId = 0;
+    if (ViewBag.CurrentEmployeeId != null)
+    {
+        currentEmpId = (int)ViewBag.CurrentEmployeeId;
+    }
+}
+
+<form id="afTokenForm" style="display:none">
+    @Html.AntiForgeryToken()
+</form>
+
+<style>
+    .employee-table-wrapper {
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 32px rgba(15,23,42,.06);
+        padding: 1.2rem 1.4rem;
+        background: #ffffff;
+    }
+
+    .employee-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-bottom: 0;
+    }
+
+        .employee-table thead th {
+            background-color: #f3f6fb;
+            color: #1f2937;
+            font-weight: 600;
+            font-size: .8rem;
+            padding: .7rem 1rem;
+            border-bottom: 2px solid #e1e6f0 !important;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .employee-table tbody td {
+            padding: .65rem 1rem;
+            border-bottom: 1px solid #eef1f7;
+            vertical-align: middle;
+            font-size: .8rem;
+        }
+
+        .employee-table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        .employee-table tbody tr:nth-child(even) {
+            background-color: #f9fafc;
+        }
+
+        .employee-table tbody tr:hover {
+            background-color: #edf4ff;
+        }
+
+    .feature-header-actions {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        flex-wrap: wrap;
+    }
+
+        .feature-header-actions .btn {
+            min-width: 40px;
+            border-radius: 999px;
+            padding-inline: 1.0rem;
+            font-size: .78rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .feature-header-actions .btn i {
+                font-size: .9rem;
+            }
+
+    .btn-pill-outline {
+        background: #ffffff;
+        border-radius: 999px;
+        border: 1px solid #d0d7e6;
+        color: #0f172a;
+    }
+
+        .btn-pill-outline i {
+            color: #0a5db0;
+        }
+
+        .btn-pill-outline:hover {
+            background: #f3f6fb;
+            border-color: #c3cce3;
+        }
+
+    .btn-pill-primary {
+        border-radius: 999px;
+        background: #0f7bd9;
+        border-color: #0f7bd9;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+    }
+
+        .btn-pill-primary:hover {
+            background: #0a5db0;
+            border-color: #0a5db0;
+        }
+
+        .btn-pill-primary i {
+            color: #ffffff;
+        }
+
+    .table-actions {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: nowrap;
+        gap: .4rem;
+        white-space: nowrap;
+    }
+
+    .table-action-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        font-size: 14px;
+        padding: 0;
+        box-shadow: 0 2px 6px rgba(15,23,42,.12);
+        transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+    }
+
+        .table-action-btn i {
+            font-size: 15px;
+        }
+
+        .table-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(15,23,42,.16);
+        }
+
+    .table-action-view {
+        background: #e0f2fe;
+        color: #0a5db0;
+    }
+
+    .table-action-edit {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .table-action-delete {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .table-action-view:hover {
+        background: #bae6fd;
+    }
+
+    .table-action-edit:hover {
+        background: #fde68a;
+    }
+
+    .table-action-delete:hover {
+        background: #fecaca;
+    }
+
+    .table-action-btn:focus {
+        outline: 2px solid rgba(15,123,217,.35);
+        outline-offset: 1px;
+    }
+
+    @@media (max-width: 575.98px) {
+        .feature-header-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+            .feature-header-actions .btn span {
+                display: none !important;
+            }
+
+            .feature-header-actions .btn {
+                padding-inline: .6rem;
+            }
+
+        .table-actions {
+            justify-content: center;
+        }
+    }
+</style>
+
+@section PageActions {
+    <div class="feature-header-actions">
+        @if (canManageEmployees)
+        {
+            <button id="btn-import" class="btn btn-pill-outline">
+                <i class="bi bi-file-earmark-arrow-up me-1"></i>
+                <span class="d-none d-md-inline">Import</span>
+            </button>
+        }
+
+        <div class="btn-group">
+            <button class="btn btn-pill-outline dropdown-toggle" data-bs-toggle="dropdown" type="button">
+                <i class="bi bi-download me-1"></i>
+                <span class="d-none d-md-inline">Template &amp; Export</span>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+                @if (canManageEmployees)
+                {
+                    <li class="dropdown-header">Template Import</li>
+                    <li>
+                        <a class="dropdown-item" href="@Url.Action("TemplateImport", "Employees")">
+                            <i class="bi bi-file-earmark-excel me-1"></i>Template Excel
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider" /></li>
+                }
+                <li class="dropdown-header">Export Data</li>
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("ExportExcel", "Employees")">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export Excel
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("ExportCsv", "Employees")">
+                        <i class="bi bi-filetype-csv me-1"></i>Export CSV
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        @if (canManageEmployees)
+        {
+            <button id="btn-add" class="btn btn-pill-primary">
+                <i class="bi bi-plus-lg me-1"></i>
+                <span class="d-none d-md-inline">Input Pekerja</span>
+            </button>
+        }
+    </div>
+}
+
+<div class="employee-table-wrapper">
+    <div class="table-responsive">
+        <table class="table employee-table align-middle w-100" id="tbl-employees">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:40px;">No</th>
+                    <th>Nama</th>
+                    <th>Nopeg</th>
+                    <th>Nopeg KPI</th>
+                    <th>Email</th>
+                    <th>HP</th>
+                    <th class="text-center">Masa Kerja (th)</th>
+                    <th>Jabatan</th>
+                    <th class="text-center" style="width:130px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model)
+                {
+                    bool isSelfRow = (currentEmpId > 0 && e.Id == currentEmpId);
+
+                    <tr>
+                        <td class="text-center"></td>
+                        <td>@e.NamaLengkap</td>
+                        <td>@e.NopegPersero</td>
+                        <td>@e.NopegKPI</td>
+                        <td>@e.EmailPertamina</td>
+                        <td>@e.NomorHP</td>
+                        <td class="text-center">@e.MasaKerjaTahun</td>
+                        <td>@e.Jabatan</td>
+                        <td class="text-center text-nowrap">
+                            <div class="table-actions">
+                                <!-- DETAIL: selalu boleh, ke halaman penuh -->
+                                <a class="table-action-btn table-action-view"
+                                   href="@Url.Action("Details", "Employees", new { id = e.Id })"
+                                   title="Detail">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+
+                                <!-- EDIT: Admin/SuperAdmin/Supervisor boleh edit semua, User cuma boleh edit dirinya sendiri -->
+                                @if (canManageEmployees || (isUserRole && isSelfRow))
+                                {
+                                    <button type="button"
+                                            class="table-action-btn table-action-edit btn-edit"
+                                            data-id="@e.Id"
+                                            title="Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+                                }
+
+                                <!-- DELETE: tetap hanya untuk canManageEmployees -->
+                                @if (canManageEmployees)
+                                {
+                                    <button type="button"
+                                            class="table-action-btn table-action-delete btn-delete"
+                                            data-id="@e.Id"
+                                            title="Hapus">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function getAfToken() {
+            return $('#afTokenForm input[name="__RequestVerificationToken"]').val();
+        }
+
+        // Helper untuk buka popup edit (dipakai tombol Edit & auto popup)
+        function openEmployeeEdit(id) {
+            if (!id) return;
+
+            const $modal = $('#ajax-modal');
+            const $modalBody = $modal.find('.modal-body');
+            const $modalTitle = $modal.find('.modal-title');
+
+            $modalTitle.text('Edit Data Pekerja');
+            $modalBody.html('<div class="p-4 text-center text-muted">Memuat data...</div>');
+
+            const modalInstance = bootstrap.Modal.getOrCreateInstance('#ajax-modal');
+            modalInstance.show();
+
+            $.get('@Url.Action("Edit", "Employees")', { id: id })
+                .done(function (html) {
+                    $modalBody.html(html);
+                })
+                .fail(function () {
+                    $modalBody.html('<div class="p-4 text-danger text-center">Gagal memuat form. Coba lagi.</div>');
+                });
+        }
+
+        $(function () {
+
+            // ================== AUTO POPUP SETELAH GANTI PASSWORD FIRST TIME ==================
+            // 1) ID dari server (ViewBag)
+            var firstEditIdFromServer = @firstEditId;
+
+            // 2) Fallback: ambil dari query string kalau ada (?firstEditId=123)
+            var qs = new URLSearchParams(window.location.search);
+            var firstEditIdFromQuery = parseInt(qs.get('firstEditId')) || 0;
+
+            // 3) Final ID yang dipakai
+            var firstEditIdJs = firstEditIdFromServer || firstEditIdFromQuery || 0;
+
+            if (firstEditIdJs > 0) {
+                // panggil langsung, jadi begitu masuk ke halaman, popup sudah muncul
+                setTimeout(function () {
+                    openEmployeeEdit(firstEditIdJs);
+                }, 200); // delay kecil biar layout siap
+            }
+
+            // ================== DATATABLE ==================
+            const lang = {
+                lengthMenu: "Show _MENU_ entries",
+                search: "Search:",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "Showing 0 to 0 of 0 entries",
+                zeroRecords: "No matching records found",
+                paginate: {
+                    first: "<<",
+                    last: ">>",
+                    next: ">",
+                    previous: "<"
+                }
+            };
+
+            // Inject info dari server ke JS
+            var currentEmpIdJs = @currentEmpId;
+            var isUserRoleJs = @(isUserRole ? "true" : "false");
+
+            // Kalau user biasa & punya EmployeeId, jangan pakai order default
+            // supaya urutan DOM dari controller (baris dirinya di atas) tidak diubah DataTables.
+            var initialOrder = [];
+            if (!(isUserRoleJs && currentEmpIdJs > 0)) {
+                initialOrder = [[1, 'asc']]; // admin dsb tetap default urut Nama
+            }
+
+            const dt = $('#tbl-employees').DataTable({
+                responsive: true,
+                order: initialOrder,
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
+                language: lang,
+                dom:
+                    "<'row g-2 mb-2'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
+                columnDefs: [
+                    { targets: 0, orderable: false, searchable: false },
+                    {
+                        targets: 8,
+                        orderable: false,
+                        searchable: false,
+                        className: "text-center text-nowrap",
+                        responsivePriority: 1
+                    }
+                ]
+            });
+
+            dt.on('draw.dt', function () {
+                const info = dt.page.info();
+                dt.column(0, { search: 'applied', order: 'applied' })
+                    .nodes()
+                    .each((cell, i) => cell.innerHTML = info.start + i + 1);
+            }).draw();
+
+            const $modal = $('#ajax-modal');
+            const $modalBody = $modal.find('.modal-body');
+            const $modalTitle = $modal.find('.modal-title');
+
+            // Tombol Input Pekerja
+            $('#btn-add').on('click', function () {
+                $.get('@Url.Action("Create", "Employees")', function (html) {
+                    $modalTitle.text('Input Data Pekerja');
+                    $modalBody.html(html);
+                    bootstrap.Modal.getOrCreateInstance('#ajax-modal').show();
+                });
+            });
+
+            // Klik Edit
+            $(document).on('click', '.btn-edit', function () {
+                const id = $(this).data('id');
+                openEmployeeEdit(id);
+            });
+
+            // Delete
+            $(document).on('click', '.btn-delete', function () {
+                const id = $(this).data('id');
+
+                Swal.fire({
+                    title: 'Hapus data pekerja?',
+                    text: 'Data yang sudah dihapus tidak dapat dikembalikan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, hapus',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    reverseButtons: false,
+                    focusCancel: true
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+
+                    $.post('@Url.Action("Delete", "Employees")',
+                        {
+                            id: id,
+                            __RequestVerificationToken: getAfToken()
+                        }
+                    ).done(function (resp) {
+                        if (resp && resp.success) {
+                            Swal.fire(
+                                'Berhasil',
+                                resp.message || 'Data pekerja berhasil dihapus.',
+                                'success'
+                            ).then(function () {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                'Gagal',
+                                (resp && resp.message) ? resp.message : 'Gagal menghapus data pekerja.',
+                                'error'
+                            );
+                        }
+                    }).fail(function (xhr) {
+                        let msg = 'Gagal menghapus data pekerja (server error).';
+                        if (xhr.status === 400) {
+                            msg = 'Token keamanan tidak valid. Silakan refresh halaman lalu coba lagi.';
+                        }
+                        Swal.fire('Gagal', msg, 'error');
+                    });
+                });
+            });
+
+            // Import
+            $('#btn-import').on('click', function () {
+                const $btn = $(this);
+                if ($btn.prop('disabled')) return;
+
+                $btn.prop('disabled', true);
+
+                $modalTitle.text('Import Data Pekerja');
+                $modalBody.load('@Url.Action("ImportDialog", "Employees")', function () {
+                    const modalInstance = bootstrap.Modal.getOrCreateInstance('#ajax-modal');
+                    modalInstance.show();
+
+                    const $form = $modalBody.find('#ajax-form');
+                    $form.on('submit', function (e) {
+                        e.preventDefault();
+
+                        const form = this;
+                        const formData = new FormData(form);
+
+                        if (typeof showLoader === 'function') showLoader(300);
+
+                        $.ajax({
+                            url: $form.attr('action'),
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false
+                        }).done(function (resp) {
+                            if (typeof hideLoader === 'function') hideLoader();
+
+                            if (resp.success) {
+                                modalInstance.hide();
+                                Swal.fire('Berhasil', resp.message, 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire('Gagal', resp.message || 'Import gagal.', 'error');
+                            }
+                        }).fail(function (xhr) {
+                            if (typeof hideLoader === 'function') hideLoader();
+
+                            if (xhr.status === 400) {
+                                Swal.fire('Gagal',
+                                    'Import gagal karena token keamanan tidak valid. Silakan refresh halaman lalu coba lagi.',
+                                    'error');
+                            } else {
+                                Swal.fire('Gagal', 'Import gagal (error jaringan/server).', 'error');
+                            }
+                        });
+                    });
+
+                    modalInstance._element.addEventListener('hidden.bs.modal', function () {
+                        $btn.prop('disabled', false);
+                    }, { once: true });
+                });
+            });
+        });
+    </script>
+}

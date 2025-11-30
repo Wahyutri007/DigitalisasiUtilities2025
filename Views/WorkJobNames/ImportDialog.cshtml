@@ -1,0 +1,125 @@
+﻿@{
+    Layout = null;
+}
+
+<div class="import-jobnames-modal">
+    <form id="jobnames-import-form" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+
+        <div class="mb-3">
+            <label class="form-label small fw-semibold">
+                File Excel (.xlsx)
+            </label>
+            <input type="file"
+                   name="file"
+                   id="jobnames-import-file"
+                   class="form-control form-control-sm"
+                   accept=".xlsx" />
+            <div class="form-text small">
+                Gunakan template:
+                <a href="@Url.Action("TemplateImport", "WorkJobNames")" target="_blank">
+                    Download Template Master Nama Pekerjaan
+                </a>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <div class="alert alert-light border small mb-0">
+                <div class="fw-semibold mb-1">Catatan:</div>
+                <ul class="mb-0 ps-3">
+                    <li>Kolom <strong>NamaPekerjaan*</strong> wajib diisi.</li>
+                    <li>Baris kosong pertama pada kolom tersebut dianggap akhir data.</li>
+                    <li>Data yang sudah ada tidak akan diduplikasi.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="mt-3 d-flex justify-content-end gap-2">
+            <button type="button"
+                    class="btn btn-sm btn-light"
+                    data-bs-dismiss="modal">
+                Batal
+            </button>
+            <button type="submit"
+                    class="btn btn-sm btn-primary"
+                    id="btn-jobnames-import-submit">
+                Import
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        const form = document.getElementById('jobnames-import-form');
+        const fileInput = document.getElementById('jobnames-import-file');
+        const submitBtn = document.getElementById('btn-jobnames-import-submit');
+
+        if (!form || !fileInput || !submitBtn) return;
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'File belum dipilih',
+                    text: 'Silakan pilih file Excel terlebih dahulu.'
+                });
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const fd = new FormData();
+            fd.append('file', file);
+
+            // token dari input hidden di form (AntiForgeryToken)
+            const tokenInput = form.querySelector('input[name="__RequestVerificationToken"]');
+            if (tokenInput) {
+                fd.append('__RequestVerificationToken', tokenInput.value);
+            }
+
+            Swal.fire({
+                title: 'Import data?',
+                text: 'Import master nama pekerjaan dari file terpilih.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, import',
+                cancelButtonText: 'Batal'
+            }).then(result => {
+                if (!result.isConfirmed) return;
+
+                submitBtn.disabled = true;
+
+                fetch('@Url.Action("Import", "WorkJobNames")', {
+                    method: 'POST',
+                    body: fd
+                })
+                    .then(r => r.json())
+                    .then(res => {
+                        Swal.fire({
+                            icon: res.success ? 'success' : 'error',
+                            title: res.success ? 'Import berhasil' : 'Import gagal',
+                            text: res.message || (res.success ? 'Import selesai.' : 'Terjadi kesalahan saat import.')
+                        }).then(() => {
+                            if (res.success) {
+                                // reload halaman index supaya tabel update
+                                window.location.reload();
+                            }
+                        });
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Terjadi kesalahan saat mengirim data ke server.'
+                        });
+                    })
+                    .finally(() => {
+                        submitBtn.disabled = false;
+                    });
+            });
+        });
+    })();
+</script>

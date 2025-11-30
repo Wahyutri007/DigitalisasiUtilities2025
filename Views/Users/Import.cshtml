@@ -1,0 +1,60 @@
+﻿@{
+    Layout = null;
+}
+
+<form id="import-users-form" asp-action="Import" asp-controller="Users" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <div class="mb-3">
+        <label class="form-label">File Excel (.xlsx)</label>
+        <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required />
+        <div class="form-text">
+            Gunakan template: <strong>Template_Import_Akun.xlsx</strong>
+            Kolom: Nopeg, Nama, Email.
+        </div>
+    </div>
+    <div class="d-flex gap-2 mt-3 pt-3 border-top">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-upload"></i> Import
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            Batal
+        </button>
+    </div>
+</form>
+
+<script>
+    $(function () {
+        $('body').off('submit', '#import-users-form');
+        $('body').on('submit', '#import-users-form', function (e) {
+            e.preventDefault();
+            const form = this;
+            const formData = new FormData(form);
+
+            $.ajax({
+                url: form.action,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (res) {
+                    if (res.success) {
+                        $('#ajax-modal').modal('hide');
+                        Swal.fire('Berhasil', res.message, 'success')
+                            .then(() => window.location.reload());
+                    } else {
+                        let msg = res.message || 'Import gagal.';
+                        if (res.errors && res.errors.length) {
+                            msg += "<ul class='text-start mt-2'>";
+                            res.errors.forEach(e => msg += `<li>${e}</li>`);
+                            msg += "</ul>";
+                        }
+                        Swal.fire({ title: 'Gagal', html: msg, icon: 'error' });
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error', 'Terjadi kesalahan server saat import.', 'error');
+                }
+            });
+        });
+    });
+</script>

@@ -1,0 +1,188 @@
+﻿@model UtilitiesHR.Models.Cuti
+@using UtilitiesHR.Models
+@{
+    Layout = null;
+    var employeeSelectList = ViewBag.EmployeeId as SelectList;
+    var usageJson = (string?)ViewBag.UsageJson ?? "{}";
+    var quotaJson = (string?)ViewBag.QuotaJson ?? "{}";
+}
+
+<style>
+    .cuti-modal-stack {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 140px);
+    }
+
+    .cuti-modal-scroll {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding-right: 4px;
+        padding-bottom: 0.25rem;
+    }
+
+    .cuti-modal-actions {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg);
+        border-top: 1px solid var(--line);
+        padding-top: 0.75rem;
+        padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 0.25rem);
+        margin-top: 0.5rem;
+        z-index: 1;
+    }
+
+    @@media (max-width: 575.98px) {
+        .cuti-modal-stack {
+            max-height: calc(100vh - 110px);
+        }
+    }
+</style>
+
+<div class="cuti-modal-stack">
+    <div class="cuti-modal-scroll">
+        <div id="warn-live" class="alert alert-warning d-none"></div>
+
+        <form asp-action="Create" id="ajax-form">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Pilih Nama Pekerja</label>
+                    <select asp-for="EmployeeId" class="form-select" asp-items="employeeSelectList">
+                        <option value="">— pilih pekerja —</option>
+                    </select>
+                    <span class="text-danger" asp-validation-for="EmployeeId"></span>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tanggal Mulai Cuti</label>
+                    <input asp-for="TanggalMulai" type="date" class="form-control" />
+                    <span class="text-danger" asp-validation-for="TanggalMulai"></span>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tanggal Selesai Cuti</label>
+                    <input asp-for="TanggalSelesai" type="date" class="form-control" />
+                    <span class="text-danger" asp-validation-for="TanggalSelesai"></span>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Jumlah Hari</label>
+                    <input asp-for="JumlahHari" type="number" min="1" class="form-control" />
+                    <span class="text-danger" asp-validation-for="JumlahHari"></span>
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Tujuan</label>
+                    <textarea asp-for="Tujuan" class="form-control" rows="2"></textarea>
+                    <span class="text-danger" asp-validation-for="Tujuan"></span>
+                </div>
+                <div class="col-12 col-md-5">
+                    <label class="form-label">Keterangan</label>
+                    <textarea asp-for="Keterangan" class="form-control" rows="3"></textarea>
+                    <span class="text-danger" asp-validation-for="Keterangan"></span>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="cuti-modal-actions d-flex justify-content-end gap-2">
+        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Batal
+        </button>
+        <button class="btn btn-primary" type="submit" form="ajax-form">
+            <i class="bi bi-check-lg"></i> Simpan
+        </button>
+    </div>
+</div>
+
+<script>
+    // Re-attach validator ke form
+    $.validator.unobtrusive.parse("#ajax-form");
+
+    // Inisialisasi Select2
+    $('#EmployeeId').select2({
+        theme: 'bootstrap-5',
+        dropdownParent: $('#ajax-modal')
+    });
+
+    // ===== LOGIKA VALIDASI KUOTA + HITUNG HARI OTOMATIS =====
+    const QUOTAS = @Html.Raw(quotaJson);
+    const USED_BY_EMP = @Html.Raw(usageJson);
+
+    const $empSel = $('#EmployeeId');
+    const $mulai = $('#TanggalMulai');
+    const $selesai = $('#TanggalSelesai');
+    const $jmlEl = $('#JumlahHari');
+    const $warn = $('#warn-live');
+
+    let manualJumlah = false; // true kalau user ubah jumlah hari sendiri
+
+    function parseDate(val) {
+        if (!val) return null;
+        return new Date(val + "T00:00:00");
+    }
+
+    function daysInclusive(m, s) {
+        const ONE_DAY = 86400000;
+        return Math.max(0, Math.floor((s.getTime() - m.getTime()) / ONE_DAY) + 1);
+    }
+
+    function updateWarning() {
+        const empId = parseInt($empSel.val() || '0');
+        const quota = QUOTAS[empId] || 12;
+        const used = USED_BY_EMP[empId] || 0;
+        const daysToTake = parseInt($jmlEl.val() || '0');
+        const projected = used + daysToTake;
+
+        if (daysToTake > 0 && projected > quota) {
+            $warn.removeClass('d-none');
+            $warn.html(
+                `<i class="bi bi-exclamation-triangle"></i> ` +
+                `<strong>Kuota Habis.</strong> Terpakai ${used}/${quota} hari. ` +
+                `Pengajuan ${daysToTake} hari tidak bisa disimpan.`
+            );
+        } else {
+            $warn.addClass('d-none').html('');
+        }
+    }
+
+    function recalcFromDatesIfAllowed() {
+        const mulai = parseDate($mulai.val());
+        const selesai = parseDate($selesai.val());
+
+        if (mulai && selesai && selesai >= mulai) {
+            const days = daysInclusive(mulai, selesai);
+
+            // Hanya auto-isi kalau user belum override manual
+            if (!manualJumlah) {
+                $jmlEl.val(days);
+            }
+        } else {
+            if (!manualJumlah) {
+                $jmlEl.val('');
+            }
+        }
+
+        updateWarning();
+    }
+
+    // Kalau tanggal berubah → hitung otomatis (kalau belum override manual)
+    $mulai.add($selesai).on('change input', function () {
+        recalcFromDatesIfAllowed();
+    });
+
+    // Kalau employee diganti → cuma update warning (kuota beda)
+    $empSel.on('change', function () {
+        updateWarning();
+    });
+
+    // Kalau user ubah jumlah hari manual
+    $jmlEl.on('input', function () {
+        const val = parseInt($(this).val() || '0');
+        // Kalau kosong atau 0 → anggap tidak override (boleh auto lagi)
+        manualJumlah = val > 0;
+        updateWarning();
+    });
+
+    // Hitung awal saat form dibuka
+    recalcFromDatesIfAllowed();
+</script>

@@ -1,0 +1,341 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = UtilitiesHR
+build_property.RootNamespace = UtilitiesHR
+build_property.ProjectDir = C:\Users\Wahyu\source\repos\DigitalisasiUtilities2025\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = C:\Users\Wahyu\source\repos\DigitalisasiUtilities2025
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 8.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Account/ChangePasswordFirstTime.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxDaGFuZ2VQYXNzd29yZEZpcnN0VGltZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Account/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Account/Profile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFxQcm9maWxlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/CutiLimits/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3V0aUxpbWl0c1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Cutis/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3V0aXNcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Cutis/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3V0aXNcRGVsZXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Cutis/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3V0aXNcRGV0YWlscy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Cutis/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3V0aXNcRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Cutis/Import.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3V0aXNcSW1wb3J0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Cutis/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ3V0aXNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Dinas/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGluYXNcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Dinas/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGluYXNcRGVsZXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Dinas/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGluYXNcRGV0YWlscy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Dinas/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGluYXNcRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Dinas/ImportDialog.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGluYXNcSW1wb3J0RGlhbG9nLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Dinas/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGluYXNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Dinas/_CreateModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGluYXNcX0NyZWF0ZU1vZGFsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/EmployeeLookups/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW1wbG95ZWVMb29rdXBzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Employees/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW1wbG95ZWVzXERlbGV0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Employees/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW1wbG95ZWVzXERldGFpbHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Employees/FirstLoginEdit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW1wbG95ZWVzXEZpcnN0TG9naW5FZGl0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Employees/ImportDialog.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW1wbG95ZWVzXEltcG9ydERpYWxvZy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Employees/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW1wbG95ZWVzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Employees/_Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW1wbG95ZWVzXF9EZXRhaWxzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Employees/_Form.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRW1wbG95ZWVzXF9Gb3JtLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Error/Forbidden.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXJyb3JcRm9yYmlkZGVuLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Error/Generic.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXJyb3JcR2VuZXJpYy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Error/NotFound.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXJyb3JcTm90Rm91bmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Error/ServerError.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXJyb3JcU2VydmVyRXJyb3IuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Error/Unauthorized.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXJyb3JcVW5hdXRob3JpemVkLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Home/Privacy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/JenisBarangs/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSmVuaXNCYXJhbmdzXERlbGV0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/JenisBarangs/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSmVuaXNCYXJhbmdzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/JenisBarangs/_JenisBarangCreate.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSmVuaXNCYXJhbmdzXF9KZW5pc0JhcmFuZ0NyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/JenisDinas/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSmVuaXNEaW5hc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/JenisDinas/_CreateModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSmVuaXNEaW5hc1xfQ3JlYXRlTW9kYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/JenisDinas/_EditModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSmVuaXNEaW5hc1xfRWRpdE1vZGFsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/MasterSertifikasis/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFzdGVyU2VydGlmaWthc2lzXENyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/MasterSertifikasis/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFzdGVyU2VydGlmaWthc2lzXERlbGV0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/MasterSertifikasis/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFzdGVyU2VydGlmaWthc2lzXEVkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/MasterSertifikasis/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWFzdGVyU2VydGlmaWthc2lzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/MaterialJenis/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxKZW5pc1xFZGl0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/MaterialJenis/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxKZW5pc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/MaterialJenis/_JenisBarangCreateModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxKZW5pc1xfSmVuaXNCYXJhbmdDcmVhdGVNb2RhbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/MaterialJenis/_JenisBarangEditModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxKZW5pc1xfSmVuaXNCYXJhbmdFZGl0TW9kYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/MaterialJenis/_MaterialFormModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxKZW5pc1xfTWF0ZXJpYWxGb3JtTW9kYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Materials/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxzXERldGFpbHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Materials/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Materials/_CreateModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxzXF9DcmVhdGVNb2RhbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Materials/_EditModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxzXF9FZGl0TW9kYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Materials/_EditTxnModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxzXF9FZGl0VHhuTW9kYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Materials/_JenisBarangModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxzXF9KZW5pc0JhcmFuZ01vZGFsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Materials/_TxnModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTWF0ZXJpYWxzXF9UeG5Nb2RhbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Profile/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHJvZmlsZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Sertifikasis/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VydGlmaWthc2lzXENyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Sertifikasis/Delete.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VydGlmaWthc2lzXERlbGV0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Sertifikasis/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VydGlmaWthc2lzXERldGFpbHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Sertifikasis/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VydGlmaWthc2lzXEVkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Sertifikasis/Import.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VydGlmaWthc2lzXEltcG9ydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Sertifikasis/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VydGlmaWthc2lzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Shared/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Users/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlcnNcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Users/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlcnNcRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Users/Import.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlcnNcSW1wb3J0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Users/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXNlcnNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/WorkJobNames/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV29ya0pvYk5hbWVzXENyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/WorkJobNames/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV29ya0pvYk5hbWVzXEVkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/WorkJobNames/ImportDialog.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV29ya0pvYk5hbWVzXEltcG9ydERpYWxvZy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/WorkJobNames/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV29ya0pvYk5hbWVzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/WorkTasks/ByPic.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV29ya1Rhc2tzXEJ5UGljLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/WorkTasks/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV29ya1Rhc2tzXENyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/WorkTasks/Details.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV29ya1Rhc2tzXERldGFpbHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/WorkTasks/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV29ya1Rhc2tzXEVkaXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/WorkTasks/ImportDialog.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV29ya1Rhc2tzXEltcG9ydERpYWxvZy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/WorkTasks/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcV29ya1Rhc2tzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/Wahyu/source/repos/DigitalisasiUtilities2025/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-0ts6xzkr8n

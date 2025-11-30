@@ -1,0 +1,341 @@
+﻿@model IEnumerable<UtilitiesHR.Models.JenisDinas>
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "Master Jenis Dinas";
+    ViewData["Breadcrumb"] = "Master Jenis Dinas";
+}
+
+@section Styles {
+    <style>
+        /* ====== BUTTON HEADER (SAMA DENGAN PEKERJA/DINAS) ====== */
+        .feature-header-actions .btn {
+            min-width: 38px;
+        }
+
+            .feature-header-actions .btn i {
+                font-size: 1rem;
+            }
+
+        .btn-pill-outline {
+            background: #ffffff;
+            border-radius: 999px;
+            border: 1px solid #d0d7e6;
+            color: #0f172a;
+        }
+
+            .btn-pill-outline i {
+                color: #0a5db0;
+            }
+
+            .btn-pill-outline:hover {
+                background: #f3f6fb;
+                border-color: #c3cce3;
+            }
+
+        .btn-pill-primary {
+            border-radius: 999px;
+            background: #0f7bd9;
+            border-color: #0f7bd9;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+        }
+
+            .btn-pill-primary:hover {
+                background: #0a5db0;
+                border-color: #0a5db0;
+            }
+
+            .btn-pill-primary i {
+                color: #ffffff;
+            }
+
+        @@media (max-width: 575.98px) {
+            .feature-header-actions .btn span
+
+        {
+            display: none !important; /* di HP, hanya icon */
+        }
+
+        .feature-header-actions .btn {
+            padding-inline: .55rem;
+        }
+
+        }
+
+        /* ====== WRAPPER TABEL ====== */
+        .jd-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            box-shadow: 0 10px 32px rgba(15,23,42,.06);
+            padding: 1rem 1.2rem;
+            background: #ffffff;
+        }
+
+        .jd-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+
+            .jd-table thead th {
+                background-color: #f3f6fb;
+                color: #1f2937;
+                font-weight: 600;
+                font-size: .8rem;
+                padding: .7rem 1rem;
+                border-bottom: 2px solid #e1e6f0 !important;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+
+            .jd-table tbody td {
+                padding: .65rem 1rem;
+                border-bottom: 1px solid #eef1f7;
+                vertical-align: middle;
+                font-size: .8rem;
+            }
+
+            .jd-table tbody tr:nth-child(odd) {
+                background-color: #ffffff;
+            }
+
+            .jd-table tbody tr:nth-child(even) {
+                background-color: #f9fafc;
+            }
+
+            .jd-table tbody tr:hover {
+                background-color: #edf4ff;
+            }
+
+        /* ====== AKSI DI TABEL (BULAT) ====== */
+        .table-actions {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .4rem;
+            white-space: nowrap;
+        }
+
+        .table-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            font-size: 14px;
+            padding: 0;
+            box-shadow: 0 2px 6px rgba(15,23,42,.12);
+            transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+        }
+
+            .table-action-btn i {
+                font-size: 15px;
+            }
+
+            .table-action-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 10px rgba(15,23,42,.16);
+            }
+
+        .table-action-edit {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .table-action-delete {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .table-action-edit:hover {
+            background: #fde68a;
+        }
+
+        .table-action-delete:hover {
+            background: #fecaca;
+        }
+
+        .table-action-btn:focus {
+            outline: 2px solid rgba(15,123,217,.35);
+            outline-offset: 1px;
+        }
+    </style>
+}
+
+@* ====== TOMBOL HEADER (SEJAJAR DENGAN BREADCRUMB) ====== *@
+@section PageActions {
+    <button class="btn btn-pill-primary" id="btn-add-jenis">
+        <i class="bi bi-plus-lg me-1"></i>
+        <span class="d-none d-md-inline">Tambah Jenis Dinas</span>
+    </button>
+}
+
+
+
+<div class="jd-table-wrapper">
+    <div class="table-responsive">
+        <table id="tbl-jenis-dinas" class="table jd-table align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:20px;">#</th>
+                    <th>Nama Jenis Dinas</th>
+                    <th>Keterangan</th>
+                    <th class="text-center" style="width:120px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var it in Model ?? Enumerable.Empty<UtilitiesHR.Models.JenisDinas>())
+                {
+                    <tr data-id="@it.Id">
+                        <td class="text-center"></td>
+                        <td>@it.Nama</td>
+                        <td>@(string.IsNullOrWhiteSpace(it.Keterangan) ? "-" : it.Keterangan)</td>
+                        <td class="text-center">
+                            <div class="table-actions">
+                                @* <button type="button"
+                                        class="table-action-btn table-action-edit btn-edit"
+                                        data-id="@it.Id"
+                                        title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button> *@
+                                <button type="button"
+                                        class="table-action-btn table-action-delete btn-delete"
+                                        data-id="@it.Id"
+                                        title="Hapus">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- form tersembunyi hanya untuk token (delete ajax) -->
+<form id="jd-token-form" method="post" style="display:none">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(function () {
+            const lang = {
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ baris",
+                info: "Menampilkan _START_–_END_ dari _TOTAL_ data",
+                infoEmpty: "Tidak ada data",
+                zeroRecords: "Tidak ditemukan data",
+                paginate: { first: "<<", last: ">>", next: ">", previous: "<" }
+            };
+
+            const t = $('#tbl-jenis-dinas').DataTable({
+                responsive: true,
+                order: [[1, 'asc']],
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
+                language: lang,
+                dom:
+                    "<'row g-2 mb-2'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
+                columnDefs: [
+                    { targets: 0, orderable: false, searchable: false, width: 20 },
+                    { targets: -1, orderable: false, searchable: false, className: 'text-center text-nowrap' }
+                ]
+            });
+
+            // nomor urut
+            t.on('draw.dt', function () {
+                const info = t.page.info();
+                t.column(0, { search: 'applied', order: 'applied' })
+                    .nodes().each((cell, i) => cell.innerHTML = info.start + i + 1);
+            }).draw();
+
+            const $modal = $('#ajax-modal');
+            const $body = $modal.find('.modal-body');
+            const $title = $modal.find('.modal-title');
+
+            // ========== CREATE (OPEN MODAL) ==========
+            $('#btn-add-jenis').on('click', function () {
+                $title.text('Tambah Jenis Dinas');
+                $body.load('@Url.Action("Create", "JenisDinas")', function () {
+                    $modal.modal('show');
+                });
+            });
+
+            // ========== EDIT (OPEN MODAL) ==========
+            $('body').on('click', '.btn-edit', function () {
+                const id = $(this).data('id');
+                $title.text('Edit Jenis Dinas');
+                $body.load('@Url.Action("Edit", "JenisDinas")/' + id, function () {
+                    $modal.modal('show');
+                });
+            });
+
+            // ========== DELETE ==========
+            $('body').on('click', '.btn-delete', function () {
+                const id = $(this).data('id');
+                const token = $('#jd-token-form input[name="__RequestVerificationToken"]').val();
+
+                Swal.fire({
+                    title: 'Yakin hapus?',
+                    text: 'Jenis dinas ini akan dihapus permanen.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, hapus',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d'
+                }).then(res => {
+                    if (!res.isConfirmed) return;
+
+                    $.post('@Url.Action("Delete", "JenisDinas")/' + id,
+                        { __RequestVerificationToken: token, id: id },
+                        function (r) {
+                            if (r.success) {
+                                Swal.fire('Berhasil', r.message, 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire('Gagal', r.message || 'Gagal menghapus data.', 'error');
+                            }
+                        }
+                    ).fail(function () {
+                        Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                    });
+                });
+            });
+
+            // ========== AJAX FORM (Create / Edit) ==========
+            $('body').on('submit', '#ajax-form', function (e) {
+                e.preventDefault();
+                const $f = $(this);
+                const data = $f.serialize();
+
+                $.post($f.attr('action'), data, function (r) {
+                    if (r.success) {
+                        $modal.modal('hide');
+                        Swal.fire('Berhasil', r.message, 'success')
+                            .then(() => location.reload());
+                    } else {
+                        let html = r.message || 'Gagal';
+                        if (r.errors) {
+                            html += "<ul class='text-start mt-2 mb-0'>";
+                            r.errors.forEach(x => html += `<li>${x}</li>`);
+                            html += "</ul>";
+                        }
+                        Swal.fire({ title: 'Gagal', html: html, icon: 'error' });
+                    }
+                }).fail(function () {
+                    Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,11 @@
+﻿@model UtilitiesHR.Models.MasterSertifikasi
+@{
+    ViewData["Title"] = "Hapus Master Sertifikasi";
+}
+<h3>Hapus Master Sertifikasi</h3>
+<p>Anda yakin ingin menghapus <b>@Model.Nama</b>?</p>
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button class="btn btn-danger">Hapus</button>
+    <a class="btn btn-outline-secondary" href="/MasterSertifikasis">Batal</a>
+</form>

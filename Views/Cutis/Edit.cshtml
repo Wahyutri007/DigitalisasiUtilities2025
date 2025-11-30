@@ -1,0 +1,196 @@
+﻿@model UtilitiesHR.Models.Cuti
+@using UtilitiesHR.Models
+@{
+    Layout = null;
+
+    var employeeSelectList = ViewBag.EmployeeId as SelectList;
+    var usageJson = (string?)ViewBag.UsageJson ?? "{}";
+    var quotaJson = (string?)ViewBag.QuotaJson ?? "{}";
+
+    // Nama pekerja untuk ditampilkan (readonly)
+    var employeeName =
+        Model.Employee?.NamaLengkap
+        ?? employeeSelectList?.FirstOrDefault(i => i.Value == Model.EmployeeId.ToString())?.Text
+        ?? "(tanpa nama)";
+}
+
+<style>
+    .cuti-modal-stack {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 140px);
+    }
+
+    .cuti-modal-scroll {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding-right: 4px;
+        padding-bottom: 0.25rem;
+    }
+
+    .cuti-modal-actions {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg);
+        border-top: 1px solid var(--line);
+        padding-top: 0.75rem;
+        padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 0.25rem);
+        margin-top: 0.5rem;
+        z-index: 1;
+    }
+
+    @@media (max-width: 575.98px) {
+        .cuti-modal-stack {
+            max-height: calc(100vh - 110px);
+        }
+    }
+</style>
+
+<div class="cuti-modal-stack">
+    <div class="cuti-modal-scroll">
+        <div id="warn-live" class="alert alert-warning d-none"></div>
+
+        <form asp-action="Edit" asp-route-id="@Model.Id" id="ajax-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <div class="row g-3">
+                <!-- NAMA PEKERJA (LOCKED / READONLY) -->
+                <div class="col-md-6">
+                    <label class="form-label">Nama Pekerja</label>
+
+                    <!-- EmployeeId dikirim sebagai hidden, tidak bisa diganti -->
+                    <input type="hidden" asp-for="EmployeeId" />
+
+                    <!-- Nama hanya tampilan -->
+                    <input type="text"
+                           class="form-control"
+                           value="@employeeName"
+                           readonly />
+
+                    <span class="text-danger" asp-validation-for="EmployeeId"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Tanggal Mulai Cuti</label>
+                    <input asp-for="TanggalMulai" type="date" class="form-control" />
+                    <span class="text-danger" asp-validation-for="TanggalMulai"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Tanggal Selesai Cuti</label>
+                    <input asp-for="TanggalSelesai" type="date" class="form-control" />
+                    <span class="text-danger" asp-validation-for="TanggalSelesai"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Jumlah Hari</label>
+                    <input asp-for="JumlahHari" type="number" min="1" class="form-control" />
+                    <span class="text-danger" asp-validation-for="JumlahHari"></span>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Tujuan</label>
+                    <textarea asp-for="Tujuan" class="form-control" rows="2"></textarea>
+                    <span class="text-danger" asp-validation-for="Tujuan"></span>
+                </div>
+
+                <div class="col-12 col-md-5">
+                    <label class="form-label">Keterangan</label>
+                    <textarea asp-for="Keterangan" class="form-control" rows="3"></textarea>
+                    <span class="text-danger" asp-validation-for="Keterangan"></span>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="cuti-modal-actions d-flex justify-content-end gap-2">
+        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Batal
+        </button>
+        <button class="btn btn-primary" type="submit" form="ajax-form">
+            <i class="bi bi-check-lg"></i> Simpan Perubahan
+        </button>
+    </div>
+</div>
+
+<script>
+    // re-init unobtrusive validation
+    $.validator.unobtrusive.parse("#ajax-form");
+
+    // ====== DATA KUOTA & TERPAKAI (tanpa cuti ini) ======
+    const QUOTAS = @Html.Raw(quotaJson);
+    const USED_BY_EMP = @Html.Raw(usageJson); // sudah exclude cuti ini
+
+    const $empId = $('#EmployeeId');              // hidden input
+    const $mulai = $('#TanggalMulai');
+    const $selesai = $('#TanggalSelesai');
+    const $jmlEl = $('#JumlahHari');
+    const $warn = $('#warn-live');
+
+    let manualJumlah = false;
+
+    function parseDate(val) {
+        if (!val) return null;
+        return new Date(val + "T00:00:00");
+    }
+
+    function daysInclusive(m, s) {
+        const ONE_DAY = 86400000;
+        return Math.max(0, Math.floor((s.getTime() - m.getTime()) / ONE_DAY) + 1);
+    }
+
+    function updateWarning() {
+        const empId = parseInt($empId.val() || '0');
+        const quota = QUOTAS[empId] || 12;
+        const used = USED_BY_EMP[empId] || 0;
+        const daysToTake = parseInt($jmlEl.val() || '0');
+        const projected = used + daysToTake;
+
+        if (daysToTake > 0 && projected > quota) {
+            $warn.removeClass('d-none');
+            $warn.html(
+                `<i class="bi bi-exclamation-triangle"></i> ` +
+                `<strong>Kuota Habis.</strong> Terpakai ${used}/${quota} hari. ` +
+                `Pengajuan ${daysToTake} hari tidak bisa disimpan.`
+            );
+        } else {
+            $warn.addClass('d-none').html('');
+        }
+    }
+
+    function recalcFromDatesIfAllowed() {
+        const mulai = parseDate($mulai.val());
+        const selesai = parseDate($selesai.val());
+
+        if (mulai && selesai && selesai >= mulai) {
+            const days = daysInclusive(mulai, selesai);
+            if (!manualJumlah) {
+                $jmlEl.val(days);
+            }
+        } else {
+            if (!manualJumlah) {
+                $jmlEl.val('');
+            }
+        }
+
+        updateWarning();
+    }
+
+    // Tanggal berubah
+    $mulai.add($selesai).on('change input', function () {
+        recalcFromDatesIfAllowed();
+    });
+
+    // User ubah jumlah hari manual
+    $jmlEl.on('input', function () {
+        const val = parseInt($(this).val() || '0');
+        manualJumlah = val > 0;
+        updateWarning();
+    });
+
+    // Hitung awal
+    recalcFromDatesIfAllowed();
+</script>

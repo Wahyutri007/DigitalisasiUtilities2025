@@ -1,0 +1,92 @@
+﻿@{
+    Layout = null;
+    ViewData["Title"] = "Import Sertifikasi";
+}
+
+<style>
+    .sertif-modal-stack {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 140px);
+    }
+
+    .sertif-modal-scroll {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding-right: 4px;
+        padding-bottom: 0.25rem;
+    }
+
+    .sertif-modal-actions {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg, #fff);
+        border-top: 1px solid var(--line, #dee2e6);
+        padding-top: 0.75rem;
+        padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 0.25rem);
+        margin-top: 0.5rem;
+        z-index: 1;
+    }
+
+    @@media (max-width: 575.98px) {
+        .sertif-modal-stack {
+            max-height: calc(100vh - 110px);
+        }
+    }
+</style>
+
+<div class="sertif-modal-stack">
+    <div class="sertif-modal-scroll">
+        <form asp-action="Import"
+              method="post"
+              enctype="multipart/form-data"
+              id="import-form">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-2">
+                <p class="mb-1">
+                    Silakan upload file <strong>Excel (.xlsx)</strong> dengan format kolom:
+                </p>
+                <ol class="mb-2">
+                    <li>Nama</li>
+                    <li>Nopeg</li>
+                    <li>NamaSertifikasi</li>
+                    <li>Lokasi</li>
+                    <li>TanggalMulai (yyyy-MM-dd, optional)</li>
+                    <li>TanggalSelesai (yyyy-MM-dd, optional)</li>
+                    <li>BerlakuDari (yyyy-MM-dd, optional)</li>
+                    <li>BerlakuSampai (yyyy-MM-dd, optional)</li>
+                    <li>Keterangan</li>
+                </ol>
+                <p class="text-muted small mb-0">
+                    Kombinasi <strong>Nama + Nopeg</strong> harus cocok dengan data Employee yang ada.
+                    Gunakan tombol <strong>Template Excel</strong> di halaman utama untuk mengunduh contoh file.
+                </p>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Pilih File Excel</label>
+                <input type="file"
+                       name="file"
+                       class="form-control"
+                       accept=".xlsx,.xls"
+                       required />
+            </div>
+        </form>
+    </div>
+
+    <div class="sertif-modal-actions d-flex justify-content-end gap-2">
+        <button type="button"
+                class="btn btn-outline-secondary"
+                data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i>
+            <span class="d-none d-md-inline"> Batal</span>
+        </button>
+        <button type="submit"
+                class="btn btn-primary"
+                form="import-form">
+            <i class="bi bi-upload"></i>
+            <span class="d-none d-md-inline"> Import</span>
+        </button>
+    </div>
+</div>

@@ -1,0 +1,299 @@
+﻿@model UtilitiesHR.Models.WorkTask
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+}
+
+<style>
+    .wt-modal-stack {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 120px);
+    }
+
+    .wt-modal-scroll {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 0.75rem 1rem 0.25rem 1rem;
+    }
+
+    .wt-modal-actions {
+        position: sticky;
+        bottom: 0;
+        background: #ffffff;
+        border-top: 1px solid #e5e7eb;
+        padding: 0.75rem 1rem;
+        padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 0.25rem);
+        z-index: 1;
+    }
+
+    .wt-pic-chips {
+        margin-top: .4rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem;
+        min-height: 1.9rem;
+        align-items: center;
+    }
+
+    .wt-pic-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: .25rem;
+        padding: .18rem .6rem;
+        border-radius: 999px;
+        background: #e0f2fe;
+        color: #0f172a;
+        font-size: .78rem;
+        box-shadow: 0 1px 3px rgba(15,23,42,.12);
+    }
+
+    .wt-pic-chip-name {
+        max-width: 220px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+    }
+
+    .wt-pic-chip-remove {
+        border: none;
+        background: transparent;
+        font-size: 1rem;
+        color: #0b4f82;
+        cursor: pointer;
+    }
+
+        .wt-pic-chip-remove:hover {
+            color: #b91c1c;
+        }
+
+    .wt-pic-empty {
+        font-size: .78rem;
+        color: #9ca3af;
+        font-style: italic;
+    }
+</style>
+
+
+<div class="wt-modal-stack">
+    <div class="wt-modal-scroll">
+        <form id="ajax-form"
+              asp-action="Create"
+              asp-controller="WorkTasks"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="NamaPekerjaan" id="NamaPekerjaan" />
+            <input type="hidden" asp-for="NamaPIC" id="NamaPIC" />
+
+            <div class="row g-3">
+
+                <!-- ======== NAMA PEKERJAAN ========= -->
+                <div class="col-12">
+                    <label class="form-label">Nama Pekerjaan</label>
+
+                    <select id="NamaPekerjaanSelect" class="form-select">
+                        <option value="">Pilih atau ketik nama pekerjaan</option>
+                    </select>
+
+                    <div class="form-text">Pilih dari master atau ketik nama pekerjaan baru.</div>
+                    <span asp-validation-for="NamaPekerjaan" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Nama Request</label>
+                    <input asp-for="NamaRequest" class="form-control" />
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Progress (%)</label>
+                    <input asp-for="ProgressPercent" id="ProgressPercent" type="number" min="0" max="100" class="form-control" />
+                    <div id="progressError" class="text-danger small"></div>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select asp-for="Status" id="Status" class="form-select">
+                        <option value="Pending">Pending</option>
+                        <option value="InProgress">In Progress</option>
+                        <option value="Done">Done</option>
+                    </select>
+                </div>
+
+                <!-- ======== PIC MULTI CHIP ========= -->
+                <div class="col-md-12">
+                    <label class="form-label">PIC (bisa lebih dari satu)</label>
+
+                    <select id="NamaPICPicker" class="form-select">
+                        <option value="">Pilih atau ketik nama PIC</option>
+                    </select>
+
+                    <div class="form-text">
+                        Tambah PIC lebih dari satu. Data akan muncul sebagai badge di bawah.
+                    </div>
+
+                    <div id="NamaPICChips" class="wt-pic-chips"></div>
+
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Start Date</label>
+                    <input asp-for="StartDate" type="date" class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Due Date</label>
+                    <input asp-for="DueDate" type="date" class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Tanggal Penyelesaian</label>
+                    <input asp-for="CompletedDate" type="date" class="form-control" />
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label">Keterangan / Tindak Lanjut</label>
+                    <textarea asp-for="KeteranganTindakLanjut" rows="4" class="form-control"></textarea>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <div class="wt-modal-actions d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Batal
+        </button>
+
+        <button type="submit" form="ajax-form" class="btn btn-primary">
+            <i class="bi bi-check-lg"></i> Simpan
+        </button>
+    </div>
+</div>
+
+<script>
+    $.validator.unobtrusive.parse("#ajax-form");
+
+    /* =================== VALIDASI PROGRESS & AUTO STATUS =================== */
+    $("#ProgressPercent").on("input", function () {
+        let val = parseInt($(this).val());
+
+        if (val > 100) {
+            $(this).val(100);
+            val = 100;
+        }
+
+        if (val < 0) {
+            $(this).val(0);
+            val = 0;
+        }
+
+        if (val === 100) {
+            $("#Status").val("Done").trigger("change");
+        } else if (val > 0) {
+            $("#Status").val("InProgress").trigger("change");
+        } else {
+            $("#Status").val("Pending").trigger("change");
+        }
+    });
+
+
+    /* =================== NAMA PEKERJAAN (Select2) =================== */
+    $('#NamaPekerjaanSelect').select2({
+        theme: 'bootstrap4',
+        dropdownParent: $('#ajax-modal'),
+        placeholder: "Pilih atau ketik nama pekerjaan",
+        width: "100%",
+        tags: true,
+        ajax: {
+            url: '@Url.Action("Options", "WorkJobNames")',
+            dataType: 'json',
+            delay: 250,
+            data: params => ({ term: params.term }),
+            processResults: data => ({ results: data })
+        },
+        createTag: params => {
+            let term = $.trim(params.term);
+            if (term === '') return null;
+            return { id: term, text: term, newTag: true };
+        }
+    });
+
+    $('#NamaPekerjaanSelect').on('change', function () {
+        $('#NamaPekerjaan').val($(this).val());
+    });
+
+
+    /* ======================= PIC CHIP SYSTEM ========================= */
+    const DEFAULT_PIC = "Belum ada PIC";
+
+    let selectedPics = [];
+
+    const $hiddenPIC = $("#NamaPIC");
+    const $chips = $("#NamaPICChips");
+    const $picker = $("#NamaPICPicker");
+
+    function refreshPIC() {
+        $chips.empty();
+
+        if (selectedPics.length === 0) {
+            $chips.append(`<span class="wt-pic-empty">${DEFAULT_PIC}</span>`);
+            $hiddenPIC.val(DEFAULT_PIC);
+        } else {
+            selectedPics.forEach(p => {
+                $chips.append(`
+                    <span class="wt-pic-chip" data-name="${p}">
+                        <span class="wt-pic-chip-name">${p}</span>
+                        <button type="button" class="wt-pic-chip-remove">&times;</button>
+                    </span>
+                `);
+            });
+            $hiddenPIC.val(selectedPics.join(', '));
+        }
+
+        $picker.val(null).trigger("change.select2");
+    }
+
+    refreshPIC();
+
+    $picker.select2({
+        theme: 'bootstrap4',
+        dropdownParent: $('#ajax-modal'),
+        placeholder: "Pilih atau ketik nama PIC",
+        width: "100%",
+        tags: true,
+        ajax: {
+            url: '@Url.Action("EmployeeOptions", "WorkTasks")',
+            dataType: 'json',
+            delay: 200,
+            data: params => ({ term: params.term }),
+            processResults: data => ({ results: data })
+        },
+        createTag: params => {
+            let term = $.trim(params.term);
+            if (term === '') return null;
+            if (selectedPics.find(x => x.toLowerCase() === term.toLowerCase())) return null;
+            return { id: term, text: term, newTag: true };
+        }
+    });
+
+    $picker.on("select2:select", function (e) {
+        let val = e.params.data.text;
+        if (!selectedPics.includes(val)) {
+            selectedPics.push(val);
+        }
+        refreshPIC();
+    });
+
+    $chips.on("click", ".wt-pic-chip-remove", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const name = $(this).closest(".wt-pic-chip").data("name");
+        selectedPics = selectedPics.filter(x => x !== name);
+
+        refreshPIC();
+    });
+</script>

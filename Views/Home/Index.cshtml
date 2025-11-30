@@ -1,0 +1,2106 @@
+﻿@using System.Text.Json
+@model UtilitiesHR.Controllers.HomeDashboardVM
+
+@{
+    ViewData["Title"] = "Dashboard Utilities HR";
+    Layout = "_Layout";
+
+    var canManageHome = User.IsInRole("Admin")
+                        || User.IsInRole("SuperAdmin")
+                        || User.IsInRole("Supervisor");
+}
+
+@section Styles {
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+
+    <style>
+        :root {
+            --primary-blue: #1e40af;
+            --primary-dark: #1e3a8a;
+            --primary-light: #3b82f6;
+            --secondary-gray: #6b7280;
+            --background-white: #ffffff;
+            --background-gray: #f8fafc;
+            --border-color: #e2e8f0;
+            --success-green: #059669;
+            --warning-orange: #d97706;
+            --error-red: #dc2626;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--background-gray);
+        }
+
+        .dashboard-wrapper {
+            padding: 0.75rem 0 2rem;
+        }
+
+        .dashboard-shell {
+            background: var(--background-white);
+            border-radius: 12px;
+            padding: 1.25rem 1.1rem 1.5rem;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.10);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .badge-chip {
+            background: var(--primary-blue);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+        }
+
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .kpi-card {
+            background: var(--background-white);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.75rem;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(15,23,42,0.05);
+            opacity: 0;
+            transform: translateY(8px);
+            animation: fadeUp .45s ease-out forwards;
+        }
+
+            .kpi-card.employee {
+                border-left: 4px solid #3b82f6;
+            }
+
+            .kpi-card.trip {
+                border-left: 4px solid #10b981;
+            }
+
+            .kpi-card.leave {
+                border-left: 4px solid #f59e0b;
+            }
+
+            .kpi-card.tasks {
+                border-left: 4px solid #06b6d4;
+            }
+
+            .kpi-card.material {
+                border-left: 4px solid #8b5cf6;
+            }
+
+            .kpi-card.certification {
+                border-left: 4px solid #ef4444;
+            }
+
+        .kpi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            color: var(--secondary-gray);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            line-height: 1;
+            margin: 0.25rem 0;
+        }
+
+        .kpi-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .kpi-card.employee .kpi-icon {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .kpi-card.trip .kpi-icon {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .kpi-card.leave .kpi-icon {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .kpi-card.tasks .kpi-icon {
+            background: #ccfbf1;
+            color: #0f766e;
+        }
+
+        .kpi-card.material .kpi-icon {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+
+        .kpi-card.certification .kpi-icon {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .kpi-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.4rem;
+            gap: .3rem;
+            flex-wrap: wrap;
+        }
+
+        .kpi-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 999px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .kpi-card.employee .kpi-badge {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .kpi-card.trip .kpi-badge {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .kpi-card.leave .kpi-badge {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .kpi-card.tasks .kpi-badge {
+            background: #ccfbf1;
+            color: #0f766e;
+        }
+
+        .kpi-card.material .kpi-badge {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+
+        .kpi-card.certification .kpi-badge {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* Panel Grid */
+        .panel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .panel-card {
+            background: var(--background-white);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 8px 20px rgba(15,23,42,0.06);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: .4rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin: 0 0 0.25rem 0;
+        }
+
+        .panel-subtitle {
+            font-size: 0.75rem;
+            color: var(--secondary-gray);
+            margin: 0;
+        }
+
+        .panel-toolbar {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            font-size: 0.75rem;
+        }
+
+            .panel-toolbar .btn-filter {
+                border-radius: 999px;
+                border: 1px solid #e5e7eb;
+                background: #f9fafb;
+                padding: 0.1rem 0.6rem;
+                font-size: 0.72rem;
+                color: #4b5563;
+            }
+
+            .panel-toolbar .dropdown-menu {
+                font-size: 0.75rem;
+            }
+
+        /* KONTENER CHART */
+        .chart-container {
+            height: 210px;
+            position: relative;
+        }
+
+        .chart-container-sm {
+            height: 160px;
+            position: relative;
+            margin-bottom: 0.6rem;
+        }
+
+        .chart-container-lg {
+            height: 250px;
+            position: relative;
+        }
+
+        .chart-mini-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--secondary-gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .chart-container-flex {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            height: 230px;
+        }
+
+            .chart-container-flex .chart-inner {
+                flex: 0 0 55%;
+                min-width: 0;
+                height: 100%;
+            }
+
+                .chart-container-flex .chart-inner canvas {
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+
+        .chart-legend {
+            flex: 1 1 45%;
+            font-size: 0.75rem;
+            max-height: 230px;
+            overflow-y: auto;
+        }
+
+            .chart-legend ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .chart-legend li {
+                display: flex;
+                align-items: flex-start;
+                gap: .4rem;
+                margin-bottom: .25rem;
+            }
+
+        .chart-legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            margin-top: 0.2rem;
+            flex-shrink: 0;
+        }
+
+        .chart-legend-label {
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .section-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--secondary-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.09em;
+            margin: 1.4rem 0 0.6rem 0;
+        }
+
+        .chart-animate {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.6s ease-out;
+        }
+
+            .chart-animate.animate-in {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+        .chart-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--secondary-gray);
+            font-size: 0.875rem;
+        }
+
+        .chart-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--secondary-gray);
+            text-align: center;
+            padding: 1rem;
+        }
+
+            .chart-empty i {
+                font-size: 2rem;
+                margin-bottom: 0.5rem;
+                opacity: 0.5;
+            }
+
+        @@keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @@media (max-width: 992px) {
+            .dashboard-shell {
+                padding: 1rem .9rem 1.3rem;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: .35rem;
+            }
+
+            .chart-container-flex {
+                flex-direction: column;
+                align-items: stretch;
+                height: auto;
+            }
+
+                .chart-container-flex .chart-inner,
+                .chart-container-flex .chart-legend {
+                    flex: 1 1 auto;
+                    max-height: none;
+                }
+
+            .chart-legend {
+                margin-top: .5rem;
+            }
+        }
+
+        @@media (min-width: 1400px) {
+            #sertNamaChartContainer {
+                height: 280px;
+            }
+        }
+    </style>
+}
+
+<div class="container dashboard-wrapper">
+    <div class="dashboard-shell">
+        <div class="dashboard-header">
+            <div>
+                <span class="badge-chip">
+                    <i class="bi bi-bar-chart-line"></i>
+                    Ringkasan Perusahaan
+                </span>
+            </div>
+        </div>
+
+        <!-- KPI CARDS -->
+        <div class="kpi-grid">
+            <div class="kpi-card employee">
+                <div class="kpi-header">
+                    <div>
+                        <div class="kpi-label">Karyawan</div>
+                        <div class="kpi-value" id="totalEmployee">-</div>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+                <div class="kpi-stats">
+                    <span class="kpi-badge" id="employeeBadge">Loading...</span>
+                </div>
+            </div>
+
+            <div class="kpi-card trip">
+                <div class="kpi-header">
+                    <div>
+                        <div class="kpi-label">Perjalanan Dinas</div>
+                        <div class="kpi-value" id="totalDinas">-</div>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-briefcase-fill"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card leave">
+                <div class="kpi-header">
+                    <div>
+                        <div class="kpi-label">Cuti</div>
+                        <div class="kpi-value" id="totalCuti">-</div>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-calendar-check-fill"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="kpi-card tasks">
+                <div class="kpi-header">
+                    <div>
+                        <div class="kpi-label">Outstanding Pekerjaan</div>
+                        <div class="kpi-value" id="totalTasksOutstanding">-</div>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-clipboard-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            @if (canManageHome)
+            {
+                <div class="kpi-card material">
+                    <div class="kpi-header">
+                        <div>
+                            <div class="kpi-label">Material</div>
+                            <div class="kpi-value" id="totalMaterial">-</div>
+                        </div>
+                        <div class="kpi-icon">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-stats">
+                        <span class="kpi-badge">Data Master</span>
+                    </div>
+                </div>
+            }
+
+            <div class="kpi-card certification">
+                <div class="kpi-header">
+                    <div>
+                        <div class="kpi-label">Sertifikasi</div>
+                        <div class="kpi-value" id="totalSertifikasi">-</div>
+                    </div>
+                    <div class="kpi-icon">
+                        <i class="bi bi-patch-check-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+
+    <div class="dashboard-shell">
+        <div class="dashboard-header">
+            <div>
+                <span class="badge-chip">
+                    <i class="bi bi-bar-chart-line"></i>
+                    Visualisasi Data
+                </span>
+            </div>
+        </div>
+
+        <!-- ANALISIS KARYAWAN -->
+        <div class="section-label">Analisis Karyawan</div>
+        <div class="panel-grid">
+            <!-- Pendidikan -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Distribusi Pendidikan</div>
+                        <div class="panel-subtitle">Pendidikan terakhir karyawan</div>
+                    </div>
+                </div>
+                <div class="chart-container chart-animate" id="eduChartContainer">
+                    <div class="chart-loading">Memuat data pendidikan...</div>
+                    <canvas id="eduChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Posisi -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Distribusi Posisi</div>
+                        <div class="panel-subtitle">Posisi pekerjaan karyawan</div>
+                    </div>
+                    <div class="panel-toolbar">
+                        <div class="dropdown">
+                            <button id="jobFilterLimitBtn" class="btn-filter dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Semua
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" id="jobFilterLimitMenu">
+                                <li><a class="dropdown-item active" data-limit="all" href="#">Semua</a></li>
+                                <li><a class="dropdown-item" data-limit="top10" href="#">Top 10</a></li>
+                                <li><a class="dropdown-item" data-limit="top20" href="#">Top 20</a></li>
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <button id="jobFilterTypeBtn" class="btn-filter dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Pie
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" id="jobFilterTypeMenu">
+                                <li><a class="dropdown-item active" data-type="pie" href="#">Pie</a></li>
+                                <li><a class="dropdown-item" data-type="donut" href="#">Donut</a></li>
+                                <li><a class="dropdown-item" data-type="bar" href="#">Bar</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container chart-animate chart-container-flex" id="jobChartContainer">
+                    <div class="chart-inner">
+                        <div class="chart-loading">Memuat data posisi...</div>
+                        <canvas id="jobChart"></canvas>
+                    </div>
+                    <div class="chart-legend" id="jobChartLegend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TREN REKRUTMEN -->
+        <div class="section-label">Tren Rekrutmen</div>
+        <div class="panel-grid">
+            <!-- Intake Pertama per Tahun -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Intake Pertama per Tahun</div>
+                        <div class="panel-subtitle">Jumlah karyawan berdasarkan tahun intake pertama</div>
+                    </div>
+                    <div class="panel-toolbar">
+                        <button class="btn-filter" type="button" disabled>
+                            <i class="bi bi-graph-up"></i> Line
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container chart-animate" id="intakeFirstChartContainer">
+                    <div class="chart-loading">Memuat data intake pertama...</div>
+                    <canvas id="intakeFirstChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Intake Aktif per Tahun -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Intake Aktif per Tahun</div>
+                        <div class="panel-subtitle">Karyawan yang masih aktif per tahun intake</div>
+                    </div>
+                    <div class="panel-toolbar">
+                        <button class="btn-filter" type="button" disabled>
+                            <i class="bi bi-graph-up"></i> Line
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container chart-animate" id="intakeActiveChartContainer">
+                    <div class="chart-loading">Memuat data intake aktif...</div>
+                    <canvas id="intakeActiveChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALISIS SERTIFIKASI -->
+        <div class="section-label">Analisis Sertifikasi</div>
+        <div class="panel-grid">
+            <!-- Sertifikasi Populer -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Sertifikasi Populer</div>
+                        <div class="panel-subtitle">Sertifikasi dengan peserta terbanyak</div>
+                    </div>
+                    <div class="panel-toolbar">
+                        <div class="dropdown">
+                            <button id="sertFilterLimitBtn" class="btn-filter dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Top 10
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" id="sertFilterLimitMenu">
+                                <li><a class="dropdown-item" data-limit="all" href="#">Semua</a></li>
+                                <li><a class="dropdown-item active" data-limit="top10" href="#">Top 10</a></li>
+                                <li><a class="dropdown-item" data-limit="top20" href="#">Top 20</a></li>
+                            </ul>
+                        </div>
+                        <div class="dropdown">
+                            <button id="sertFilterTypeBtn" class="btn-filter dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Pie
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" id="sertFilterTypeMenu">
+                                <li><a class="dropdown-item active" data-type="pie" href="#">Pie</a></li>
+                                <li><a class="dropdown-item" data-type="donut" href="#">Donut</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-container chart-container-lg chart-animate" id="sertNamaChartContainer">
+                    <div class="chart-loading">Memuat data sertifikasi populer...</div>
+                    <canvas id="sertNamaChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Status Sertifikasi -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Status Sertifikasi</div>
+                        <div class="panel-subtitle">Aktif vs kadaluarsa</div>
+                    </div>
+                    <div class="panel-toolbar">
+                        <button class="btn-filter" type="button" disabled>
+                            <i class="bi bi-bar-chart"></i> Bar
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-container chart-container-lg chart-animate" id="sertifikasiChartContainer">
+                    <div class="chart-loading">Memuat data sertifikasi...</div>
+                    <canvas id="sertifikasiChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALISIS DINAS -->
+        <div class="section-label" id="dinasSectionLabel" style="display:none;">Analisis Perjalanan Dinas</div>
+        <div class="panel-grid" id="dinasPanelGrid" style="display:none;">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Status Dinas</div>
+                        <div class="panel-subtitle">Aktif vs selesai</div>
+                    </div>
+                </div>
+                <div class="chart-container chart-animate" id="dinasChartContainer">
+                    <div class="chart-loading">Memuat data dinas...</div>
+                    <canvas id="dinasChart"></canvas>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Jenis Kegiatan</div>
+                        <div class="panel-subtitle">10 jenis kegiatan terbanyak</div>
+                    </div>
+                </div>
+                <div class="chart-container chart-animate" id="dinasJenisChartContainer">
+                    <div class="chart-loading">Memuat data jenis dinas...</div>
+                    <canvas id="dinasJenisChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANALISIS CUTI -->
+        <div class="section-label" id="cutiSectionLabel" style="display:none;">Analisis Cuti</div>
+        <div class="panel-grid" id="cutiPanelGrid" style="display:none;">
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Status Cuti</div>
+                        <div class="panel-subtitle">Berjalan vs selesai</div>
+                    </div>
+                </div>
+                <div class="chart-container chart-animate" id="cutiChartContainer">
+                    <div class="chart-loading">Memuat data cuti...</div>
+                    <canvas id="cutiChart"></canvas>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Tren Pengajuan</div>
+                        <div class="panel-subtitle">Pengajuan cuti per tahun</div>
+                    </div>
+                </div>
+                <div class="chart-container chart-animate" id="cutiYearChartContainer">
+                    <div class="chart-loading">Memuat tren cuti...</div>
+                    <canvas id="cutiYearChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVENTORY MATERIAL -->
+        <div class="section-label">Inventory Material</div>
+        <div class="panel-grid">
+            @if (canManageHome)
+            {
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-title">Stok Material Terbanyak</div>
+                            <div class="panel-subtitle">Material dengan stok tertinggi</div>
+                        </div>
+                    </div>
+                    <div class="chart-container chart-animate" id="materialChartContainer">
+                        <div class="chart-loading">Memuat data material...</div>
+                        <canvas id="materialChart"></canvas>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- OUTSTANDING PEKERJAAN -->
+        <div class="section-label">Outstanding Pekerjaan Utilities</div>
+        <div class="panel-grid">
+            <!-- Status Pekerjaan -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Status Pekerjaan</div>
+                        <div class="panel-subtitle">Pending / In Progress / Done</div>
+                    </div>
+                </div>
+                <div class="chart-container chart-animate" id="taskStatusChartContainer">
+                    <div class="chart-loading">Memuat data pekerjaan...</div>
+                    <canvas id="taskStatusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Prioritas Pekerjaan -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Prioritas Pekerjaan</div>
+                        <div class="panel-subtitle">Low, Medium, High, Emergency</div>
+                    </div>
+                </div>
+                <div class="chart-container chart-animate" id="taskPriorityChartContainer">
+                    <div class="chart-loading">Memuat data prioritas...</div>
+                    <canvas id="taskPriorityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- BARU: Nama Pekerjaan Terbanyak -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <div class="panel-title">Nama Pekerjaan Terbanyak</div>
+                        <div class="panel-subtitle">10 nama pekerjaan paling sering muncul</div>
+                    </div>
+                </div>
+                <div class="chart-container chart-animate" id="taskJobChartContainer">
+                    <div class="chart-loading">Memuat data nama pekerjaan...</div>
+                    <canvas id="taskJobChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const canManageHome = @(canManageHome ? "true" : "false");
+
+        // ==== DATA DARI SERVER ====
+        const dashboardData = {
+            totalEmployee: @Model.TotalEmployee,
+            totalDinas: @Model.TotalDinas,
+            totalDinasAktif: @Model.TotalDinasAktif,
+            totalDinasNonAktif: @Model.TotalDinasNonAktif,
+            totalCuti: @Model.TotalCuti,
+            totalCutiAktif: @Model.TotalCutiAktif,
+            totalCutiSelesai: @Model.TotalCutiSelesai,
+            totalMaterial: @Model.TotalMaterial,
+            totalSertifikasi: @Model.TotalSertifikasi,
+            totalSertifikasiAktif: @Model.TotalSertifikasiAktif,
+            totalSertifikasiExpired: @Model.TotalSertifikasiExpired,
+            totalUsers: @Model.TotalUsers,
+
+            employeesByPendidikan: @Html.Raw(JsonSerializer.Serialize(Model.EmployeesByPendidikan)),
+            employeesByJobType: @Html.Raw(JsonSerializer.Serialize(Model.EmployeesByJobType)),
+            employeesByIntakePertamaYear: @Html.Raw(JsonSerializer.Serialize(Model.EmployeesByIntakePertamaYear)),
+            employeesByIntakeAktifYear: @Html.Raw(JsonSerializer.Serialize(Model.EmployeesByIntakeAktifYear)),
+            dinasByJenis: @Html.Raw(JsonSerializer.Serialize(Model.DinasByJenis)),
+            cutiByYear: @Html.Raw(JsonSerializer.Serialize(Model.CutiByYear)),
+            materialsTopStock: @Html.Raw(JsonSerializer.Serialize(Model.MaterialsTopStock)),
+            sertifikasiByNama: @Html.Raw(JsonSerializer.Serialize(Model.SertifikasiByNama)),
+
+            totalWorkTasks: @Model.TotalWorkTasks,
+            totalOutstandingWorkTasks: @Model.TotalOutstandingWorkTasks,
+            workTasksByStatus: @Html.Raw(JsonSerializer.Serialize(Model.WorkTasksByStatus)),
+            workTasksByPriority: @Html.Raw(JsonSerializer.Serialize(Model.WorkTasksByPriority)),
+            // BARU: nama pekerjaan terbanyak
+            workTasksByJobName: @Html.Raw(JsonSerializer.Serialize(Model.WorkTasksByJobName))
+        };
+
+        const chartInstances = new Map();
+
+        const colorPalettes = {
+            blue:   ['#3b82f6', '#1e40af', '#60a5fa', '#2563eb', '#1d4ed8', '#93c5fd', '#3730a3', '#1e1b4b'],
+            green:  ['#10b981', '#059669', '#34d399', '#16a34a', '#15803d', '#86efac', '#14532d', '#052e16'],
+            purple: ['#8b5cf6', '#7c3aed', '#a78bfa', '#9333ea', '#7e22ce', '#c4b5fd', '#581c87', '#3b0764'],
+            orange: ['#f59e0b', '#d97706', '#fbbf24', '#ea580c', '#dc2626', '#fed7aa', '#7c2d12', '#431407'],
+            teal:   ['#06b6d4', '#0891b2', '#22d3ee', '#0d9488', '#0f766e', '#67e8f9', '#115e59', '#134e4a'],
+            red:    ['#ef4444', '#dc2626', '#f87171', '#b91c1c', '#991b1b', '#fca5a5', '#7f1d1d', '#450a0a'],
+            gray:   ['#6b7280', '#4b5563', '#9ca3af', '#374151', '#1f2937', '#d1d5db', '#111827', '#030712']
+        };
+
+        function wrapLabel(label, maxLen) {
+            if (!label) return '';
+            const text = String(label);
+            if (text.length <= maxLen) return text;
+
+            const words = text.split(' ');
+            const lines = [];
+            let current = '';
+
+            words.forEach(w => {
+                const test = (current + ' ' + w).trim();
+                if (test.length > maxLen) {
+                    if (current.trim().length > 0) lines.push(current.trim());
+                    current = w;
+                } else {
+                    current = test;
+                }
+            });
+
+            if (current.trim().length > 0) lines.push(current.trim());
+            return lines;
+        }
+
+        // helper dynamic height
+        function setDynamicContainerHeight(containerId, itemCount, baseHeight, perItem, maxHeight) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+
+            if (!itemCount || itemCount <= 0) {
+                el.style.height = baseHeight + 'px';
+                return;
+            }
+
+            const extra = Math.max(0, itemCount - 10) * perItem;
+            const finalH = Math.min(maxHeight, baseHeight + extra);
+            el.style.height = finalH + 'px';
+        }
+
+        function adjustSertNamaContainer(count) {
+            setDynamicContainerHeight('sertNamaChartContainer', count, 250, 6, 420);
+        }
+
+        function adjustMaterialContainer(count) {
+            setDynamicContainerHeight('materialChartContainer', count, 210, 4, 360);
+        }
+
+        function adjustTaskJobContainer(count) {
+            // supaya kalau 10 nama, masih enak dibaca, kalau lebih tetap tidak terlalu tinggi
+            setDynamicContainerHeight('taskJobChartContainer', count, 210, 4, 360);
+        }
+
+        const chartObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+
+                entry.target.classList.add('animate-in');
+                const canvas = entry.target.querySelector('canvas');
+
+                if (canvas && chartInstances.has(canvas.id)) {
+                    const chart = chartInstances.get(canvas.id);
+                    updateChartWithRealData(chart, canvas.id, entry.target);
+                }
+
+                chartObserver.unobserve(entry.target);
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+        function getColors(count, paletteName) {
+            const palette = colorPalettes[paletteName];
+            const colors = [];
+            for (let i = 0; i < count; i++) {
+                colors.push(palette[i % palette.length]);
+            }
+            return colors;
+        }
+
+        function handleEmptyChart(container) {
+            const canvas = container.querySelector('canvas');
+            const loading = container.querySelector('.chart-loading');
+            if (loading) loading.style.display = 'none';
+            if (canvas) canvas.style.display = 'none';
+
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'chart-empty';
+            emptyDiv.innerHTML = `
+                <i class="bi bi-bar-chart"></i>
+                <p>Tidak ada data untuk ditampilkan</p>
+            `;
+            container.appendChild(emptyDiv);
+        }
+
+        // ====== VIEW STATE DISTRIBUSI POSISI ======
+        const jobViewState = {
+            limit: 'all', // all | top10 | top20
+            type: 'pie'   // pie | donut | bar
+        };
+
+        function renderJobLegend(chart) {
+            const legendContainer = document.getElementById('jobChartLegend');
+            if (!legendContainer) return;
+
+            const labels = chart.data.labels || [];
+            const colors = chart.data.datasets[0]?.backgroundColor || [];
+
+            if (!labels.length) {
+                legendContainer.innerHTML = '<div class="chart-empty"><p>Tidak ada data posisi</p></div>';
+                return;
+            }
+
+            let html = '<ul>';
+            labels.forEach((label, idx) => {
+                const color = colors[idx % colors.length] || '#6b7280';
+                html += `
+                    <li>
+                        <span class="chart-legend-color" style="background-color:${color}"></span>
+                        <span class="chart-legend-label">${label}</span>
+                    </li>`;
+            });
+            html += '</ul>';
+            legendContainer.innerHTML = html;
+        }
+
+        function applyJobChartView() {
+            const raw = dashboardData.employeesByJobType || [];
+            const container = document.getElementById('jobChartContainer');
+            const chart = chartInstances.get('jobChart');
+
+            if (!chart) return;
+
+            if (!raw.length) {
+                if (container) handleEmptyChart(container);
+                return;
+            }
+
+            let sorted = raw.slice().sort((a, b) => b.Value - a.Value);
+            let limited = sorted;
+
+            switch (jobViewState.limit) {
+                case 'top10':
+                    limited = sorted.slice(0, 10);
+                    break;
+                case 'top20':
+                    limited = sorted.slice(0, 20);
+                    break;
+            }
+
+            const labels = limited.map(i => i.Label);
+            const values = limited.map(i => i.Value);
+
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = values;
+            chart.data.datasets[0].backgroundColor = getColors(values.length, 'green');
+
+            const loadingJob = container?.querySelector('.chart-loading');
+            if (loadingJob) loadingJob.style.display = 'none';
+
+            if (jobViewState.type === 'bar') {
+                chart.config.type = 'bar';
+                chart.options.indexAxis = 'y';
+                chart.options.scales = chart.options.scales || {};
+
+                chart.options.scales.x = {
+                    beginAtZero: true,
+                    ticks: {
+                        font: { size: 9 },
+                        callback: v => Number.isInteger(v) ? v : ''
+                    },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                };
+
+                chart.options.scales.y = {
+                    ticks: {
+                        font: { size: 10 },
+                        callback: function (value, index, ticks) {
+                            const label = this.getLabelForValue
+                                ? this.getLabelForValue(value)
+                                : (ticks[index]?.label ?? value);
+                            return wrapLabel(label, 26);
+                        }
+                    },
+                    grid: { display: false }
+                };
+
+                chart.options.plugins.legend.display = false;
+            } else {
+                chart.config.type = 'doughnut';
+                chart.options.indexAxis = undefined;
+                chart.options.cutout = (jobViewState.type === 'pie') ? '0%' : '55%';
+                chart.options.plugins.legend.display = false;
+            }
+
+            chart.update();
+            renderJobLegend(chart);
+        }
+
+        // ====== VIEW STATE SERTIFIKASI POPULER ======
+        const sertPopularViewState = {
+            limit: 'top10', // all | top10 | top20
+            type: 'pie'     // pie | donut
+        };
+
+        function applySertPopularView() {
+            const raw = dashboardData.sertifikasiByNama || [];
+            const container = document.getElementById('sertNamaChartContainer');
+            const chart = chartInstances.get('sertNamaChart');
+
+            if (!chart) return;
+
+            if (!raw.length) {
+                if (container) handleEmptyChart(container);
+                return;
+            }
+
+            let sorted = raw.slice().sort((a, b) => b.Value - a.Value);
+            let limited = sorted;
+
+            switch (sertPopularViewState.limit) {
+                case 'top10':
+                    limited = sorted.slice(0, 10);
+                    break;
+                case 'top20':
+                    limited = sorted.slice(0, 20);
+                    break;
+                case 'all':
+                default:
+                    break;
+            }
+
+            const labels = limited.map(i => i.Label);
+            const values = limited.map(i => i.Value);
+
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = values;
+            chart.data.datasets[0].backgroundColor = getColors(values.length, 'teal');
+
+            chart.config.type = (sertPopularViewState.type === 'donut') ? 'doughnut' : 'pie';
+            chart.options.cutout = (sertPopularViewState.type === 'donut') ? '55%' : '0%';
+
+            const loading = container?.querySelector('.chart-loading');
+            if (loading) loading.style.display = 'none';
+            const canvas = container?.querySelector('canvas');
+            if (canvas) canvas.style.display = 'block';
+
+            adjustSertNamaContainer(labels.length);
+
+            chart.update();
+        }
+
+        function updateChartWithRealData(chart, chartId, container) {
+            const data = dashboardData;
+
+            switch (chartId) {
+                case 'eduChart':
+                    if (!data.employeesByPendidikan || data.employeesByPendidikan.length === 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    chart.data.labels = data.employeesByPendidikan.map(i => i.Label);
+                    chart.data.datasets[0].data = data.employeesByPendidikan.map(i => i.Value);
+                    chart.data.datasets[0].backgroundColor =
+                        getColors(data.employeesByPendidikan.length, 'blue');
+                    break;
+
+                case 'jobChart':
+                    applyJobChartView();
+                    return;
+
+                case 'intakeFirstChart':
+                    if (!data.employeesByIntakePertamaYear || data.employeesByIntakePertamaYear.length === 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    chart.data.labels = data.employeesByIntakePertamaYear.map(i => i.Label);
+                    chart.data.datasets[0].data = data.employeesByIntakePertamaYear.map(i => i.Value);
+                    break;
+
+                case 'intakeActiveChart':
+                    if (!data.employeesByIntakeAktifYear || data.employeesByIntakeAktifYear.length === 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    chart.data.labels = data.employeesByIntakeAktifYear.map(i => i.Label);
+                    chart.data.datasets[0].data = data.employeesByIntakeAktifYear.map(i => i.Value);
+                    break;
+
+                case 'sertifikasiChart':
+                    chart.data.labels = ['Aktif', 'Kadaluarsa'];
+                    chart.data.datasets[0].data = [
+                        data.totalSertifikasiAktif,
+                        data.totalSertifikasiExpired
+                    ];
+                    break;
+
+                case 'dinasChart':
+                    if (data.totalDinas <= 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    chart.data.datasets[0].data = [
+                        data.totalDinasAktif,
+                        data.totalDinasNonAktif
+                    ];
+                    break;
+
+                case 'dinasJenisChart':
+                    if (!data.dinasByJenis || data.dinasByJenis.length === 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    chart.data.labels = data.dinasByJenis.map(i => i.Label);
+                    chart.data.datasets[0].data = data.dinasByJenis.map(i => i.Value);
+                    chart.data.datasets[0].backgroundColor =
+                        getColors(data.dinasByJenis.length, 'orange');
+                    break;
+
+                case 'cutiChart':
+                    if (data.totalCuti <= 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    chart.data.datasets[0].data = [
+                        data.totalCutiAktif,
+                        data.totalCutiSelesai
+                    ];
+                    break;
+
+                case 'cutiYearChart':
+                    if (!data.cutiByYear || data.cutiByYear.length === 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    chart.data.labels = data.cutiByYear.map(i => i.Label);
+                    chart.data.datasets[0].data = data.cutiByYear.map(i => i.Value);
+                    break;
+
+                case 'materialChart':
+                    if (!data.materialsTopStock || data.materialsTopStock.length === 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    chart.data.labels = data.materialsTopStock.map(i => i.Label);
+                    chart.data.datasets[0].data = data.materialsTopStock.map(i => i.Value);
+                    chart.data.datasets[0].backgroundColor =
+                        getColors(data.materialsTopStock.length, 'purple');
+
+                    adjustMaterialContainer(chart.data.labels.length);
+                    break;
+
+                case 'sertNamaChart':
+                    if (!data.sertifikasiByNama || data.sertifikasiByNama.length === 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    applySertPopularView();
+                    return;
+
+                case 'taskStatusChart':
+                    if (!data.workTasksByStatus || data.workTasksByStatus.length === 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    chart.data.labels = data.workTasksByStatus.map(i => i.Label);
+                    chart.data.datasets[0].data = data.workTasksByStatus.map(i => i.Value);
+                    break;
+
+                case 'taskPriorityChart':
+                    if (!data.workTasksByPriority || data.workTasksByPriority.length === 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    chart.data.labels = data.workTasksByPriority.map(i => i.Label);
+                    chart.data.datasets[0].data = data.workTasksByPriority.map(i => i.Value);
+                    break;
+
+                case 'taskJobChart':
+                    if (!data.workTasksByJobName || data.workTasksByJobName.length === 0) {
+                        handleEmptyChart(container);
+                        return;
+                    }
+                    chart.data.labels = data.workTasksByJobName.map(i => i.Label);
+                    chart.data.datasets[0].data = data.workTasksByJobName.map(i => i.Value);
+                    chart.data.datasets[0].backgroundColor =
+                        getColors(data.workTasksByJobName.length, 'teal');
+
+                    adjustTaskJobContainer(chart.data.labels.length);
+                    break;
+            }
+
+            const loading = container.querySelector('.chart-loading');
+            if (loading && chartId !== 'jobChart' && chartId !== 'sertNamaChart') loading.style.display = 'none';
+
+            chart.update();
+        }
+
+        function toggleSections() {
+            const data = dashboardData;
+            if (data.totalDinas > 0) {
+                document.getElementById('dinasSectionLabel').style.display = 'block';
+                document.getElementById('dinasPanelGrid').style.display = 'grid';
+            }
+            if (data.totalCuti > 0) {
+                document.getElementById('cutiSectionLabel').style.display = 'block';
+                document.getElementById('cutiPanelGrid').style.display = 'grid';
+            }
+        }
+
+        function updateKPICards() {
+            const d = dashboardData;
+            const totalEmployeeEl = document.getElementById('totalEmployee');
+            const totalDinasEl = document.getElementById('totalDinas');
+            const totalCutiEl = document.getElementById('totalCuti');
+            const totalMaterialEl = document.getElementById('totalMaterial');
+            const totalSertEl = document.getElementById('totalSertifikasi');
+            const totalTasksOutstandingEl = document.getElementById('totalTasksOutstanding');
+
+            if (totalEmployeeEl) totalEmployeeEl.textContent = d.totalEmployee;
+            if (totalDinasEl) totalDinasEl.textContent = d.totalDinas;
+            if (totalCutiEl) totalCutiEl.textContent = d.totalCuti;
+            if (totalMaterialEl) totalMaterialEl.textContent = d.totalMaterial;
+            if (totalSertEl) totalSertEl.textContent = d.totalSertifikasi;
+            if (totalTasksOutstandingEl) totalTasksOutstandingEl.textContent = d.totalOutstandingWorkTasks;
+
+            const employeeBadge = document.getElementById('employeeBadge');
+            if (employeeBadge) {
+                employeeBadge.textContent = d.totalEmployee <= 1 ? "Profil Anda" : "Semua Karyawan";
+            }
+        }
+
+        // ==== INIT CHART KOSONG ====
+        function initializeCharts() {
+            // Pendidikan
+            const eduCanvas = document.getElementById('eduChart');
+            if (eduCanvas) {
+                const eduChart = new Chart(eduCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Jumlah',
+                            data: [],
+                            backgroundColor: [],
+                            borderColor: '#1e40af',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            maxBarThickness: 22
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 10, right: 10, bottom: 10, left: 10 } },
+                        animation: { duration: 800, easing: 'easeOutQuart' },
+                        scales: {
+                            x: {
+                                ticks: { font: { size: 10 } },
+                                grid: { display: false }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    font: { size: 9 },
+                                    callback: v => Number.isInteger(v) ? v : ''
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}`
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('eduChart', eduChart);
+            }
+
+            // Distribusi posisi
+            const jobCanvas = document.getElementById('jobChart');
+            if (jobCanvas) {
+                const jobChart = new Chart(jobCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Jumlah',
+                            data: [],
+                            backgroundColor: [],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '55%',
+                        layout: { padding: { top: 10, right: 10, bottom: 10, left: 10 } },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => {
+                                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0) || 1;
+                                        const value = ctx.parsed;
+                                        const pct = (value / total * 100).toFixed(1);
+                                        return `${ctx.label}: ${value} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('jobChart', jobChart);
+            }
+
+            // Intake Pertama
+            const intakeFirstCanvas = document.getElementById('intakeFirstChart');
+            if (intakeFirstCanvas) {
+                const intakeFirstChart = new Chart(intakeFirstCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Intake Pertama',
+                            data: [],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59,130,246,0.14)',
+                            borderWidth: 2,
+                            tension: 0.35,
+                            fill: true,
+                            pointRadius: 3,
+                            pointHoverRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 10, right: 18, bottom: 10, left: 10 } },
+                        animation: { duration: 800, easing: 'easeOutQuart' },
+                        scales: {
+                            x: {
+                                ticks: { font: { size: 10 } },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    font: { size: 9 },
+                                    callback: v => Number.isInteger(v) ? v : ''
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}`
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('intakeFirstChart', intakeFirstChart);
+            }
+
+            // Intake Aktif
+            const intakeActiveCanvas = document.getElementById('intakeActiveChart');
+            if (intakeActiveCanvas) {
+                const intakeActiveChart = new Chart(intakeActiveCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Intake Aktif',
+                            data: [],
+                            borderColor: '#f97316',
+                            backgroundColor: 'rgba(249,115,22,0.16)',
+                            borderWidth: 2,
+                            tension: 0.35,
+                            fill: true,
+                            pointRadius: 3,
+                            pointHoverRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 10, right: 18, bottom: 10, left: 10 } },
+                        animation: { duration: 800, easing: 'easeOutQuart' },
+                        scales: {
+                            x: {
+                                ticks: { font: { size: 10 } },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    font: { size: 9 },
+                                    callback: v => Number.isInteger(v) ? v : ''
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}`
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('intakeActiveChart', intakeActiveChart);
+            }
+
+            // Status Sertifikasi (BAR)
+            const sertCanvas = document.getElementById('sertifikasiChart');
+            if (sertCanvas) {
+                const sertChart = new Chart(sertCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Aktif', 'Kadaluarsa'],
+                        datasets: [{
+                            label: 'Jumlah Sertifikasi',
+                            data: [0, 0],
+                            backgroundColor: ['#10b981', '#ef4444'],
+                            borderColor: ['#059669', '#b91c1c'],
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            maxBarThickness: 30
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 10, right: 10, bottom: 12, left: 10 } },
+                        animation: { duration: 800, easing: 'easeOutQuart' },
+                        scales: {
+                            x: {
+                                ticks: { font: { size: 11 } },
+                                grid: { display: false }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    font: { size: 10 },
+                                    callback: v => Number.isInteger(v) ? v : ''
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}`
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('sertifikasiChart', sertChart);
+            }
+
+            // Dinas
+            const dinasCanvas = document.getElementById('dinasChart');
+            if (dinasCanvas) {
+                const dinasChart = new Chart(dinasCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Aktif', 'Selesai'],
+                        datasets: [{
+                            data: [0, 0],
+                            backgroundColor: ['#3b82f6', '#6b7280'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '60%',
+                        layout: { padding: { top: 10, right: 10, bottom: 10, left: 10 } },
+                        animation: { animateRotate: true, animateScale: true, duration: 800 },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 10 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => {
+                                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0) || 1;
+                                        const value = ctx.parsed;
+                                        const pct = (value / total * 100).toFixed(1);
+                                        return `${ctx.label}: ${value} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('dinasChart', dinasChart);
+            }
+
+            // Dinas Jenis
+            const dinasJenisCanvas = document.getElementById('dinasJenisChart');
+            if (dinasJenisCanvas) {
+                const dinasJenisChart = new Chart(dinasJenisCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Jumlah',
+                            data: [],
+                            backgroundColor: [],
+                            borderColor: '#d97706',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            maxBarThickness: 22
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 10, right: 18, bottom: 10, left: 10 } },
+                        animation: { duration: 800, easing: 'easeOutQuart' },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    font: { size: 9 },
+                                    callback: v => Number.isInteger(v) ? v : ''
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            y: {
+                                ticks: {
+                                    font: { size: 10 },
+                                    callback: function (value, index, ticks) {
+                                        const label = this.getLabelForValue
+                                            ? this.getLabelForValue(value)
+                                            : (ticks[index]?.label ?? value);
+                                        return wrapLabel(label, 22);
+                                    }
+                                },
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.parsed.x)}`
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('dinasJenisChart', dinasJenisChart);
+            }
+
+            // Cuti donut
+            const cutiCanvas = document.getElementById('cutiChart');
+            if (cutiCanvas) {
+                const cutiChart = new Chart(cutiCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Berjalan', 'Selesai'],
+                        datasets: [{
+                            data: [0, 0],
+                            backgroundColor: ['#f59e0b', '#6b7280'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '60%',
+                        layout: { padding: { top: 10, right: 10, bottom: 12, left: 10 } },
+                        animation: { animateRotate: true, animateScale: true, duration: 800 },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 10 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => {
+                                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0) || 1;
+                                        const value = ctx.parsed;
+                                        const pct = (value / total * 100).toFixed(1);
+                                        return `${ctx.label}: ${value} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('cutiChart', cutiChart);
+            }
+
+            // Cuti per tahun
+            const cutiYearCanvas = document.getElementById('cutiYearChart');
+            if (cutiYearCanvas) {
+                const cutiYearChart = new Chart(cutiYearCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Pengajuan',
+                            data: [],
+                            backgroundColor: '#ef4444',
+                            borderColor: '#dc2626',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            maxBarThickness: 22
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 10, right: 10, bottom: 12, left: 10 } },
+                        animation: { duration: 800, easing: 'easeOutQuart' },
+                        scales: {
+                            x: {
+                                ticks: { font: { size: 10 } },
+                                grid: { display: false }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    font: { size: 9 },
+                                    callback: v => Number.isInteger(v) ? v : ''
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}`
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('cutiYearChart', cutiYearChart);
+            }
+
+            // Material – vertical bar
+            const materialCanvas = document.getElementById('materialChart');
+            if (materialCanvas) {
+                const materialChart = new Chart(materialCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Stok',
+                            data: [],
+                            backgroundColor: [],
+                            borderColor: '#7c3aed',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            maxBarThickness: 26
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 10, right: 10, bottom: 18, left: 8 } },
+                        animation: { duration: 800, easing: 'easeOutQuart' },
+                        scales: {
+                            x: {
+                                ticks: {
+                                    font: { size: 9 },
+                                    autoSkip: false,
+                                    maxRotation: 45,
+                                    minRotation: 0,
+                                    callback: function (value, index, ticks) {
+                                        const label = this.getLabelForValue
+                                            ? this.getLabelForValue(value)
+                                            : (ticks[index]?.label ?? value);
+                                        return wrapLabel(label, 16);
+                                    }
+                                },
+                                grid: { display: false }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    font: { size: 9 },
+                                    callback: v => Number.isInteger(v) ? v : ''
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.parsed.y)}`
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('materialChart', materialChart);
+            }
+
+            // Sertifikasi by nama (pie / donut)
+            const sertNamaCanvas = document.getElementById('sertNamaChart');
+            if (sertNamaCanvas) {
+                const sertNamaChart = new Chart(sertNamaCanvas, {
+                    type: 'pie',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Peserta',
+                            data: [],
+                            backgroundColor: [],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 10, right: 10, bottom: 10, left: 10 } },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 10 },
+                                    boxWidth: 10
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => {
+                                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0) || 1;
+                                        const value = ctx.parsed;
+                                        const pct = (value / total * 100).toFixed(1);
+                                        return `${ctx.label}: ${value} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('sertNamaChart', sertNamaChart);
+            }
+
+            // Task Status
+            const taskStatusCanvas = document.getElementById('taskStatusChart');
+            if (taskStatusCanvas) {
+                const taskStatusChart = new Chart(taskStatusCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            data: [],
+                            backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#6b7280'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '55%',
+                        layout: { padding: { top: 10, right: 10, bottom: 12, left: 10 } },
+                        animation: { animateRotate: true, animateScale: true, duration: 800 },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 10 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => {
+                                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0) || 1;
+                                        const value = ctx.parsed;
+                                        const pct = (value / total * 100).toFixed(1);
+                                        return `${ctx.label}: ${value} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('taskStatusChart', taskStatusChart);
+            }
+
+            // Task Priority
+            const taskPriorityCanvas = document.getElementById('taskPriorityChart');
+            if (taskPriorityCanvas) {
+                const taskPriorityChart = new Chart(taskPriorityCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Jumlah',
+                            data: [],
+                            backgroundColor: ['#10b981', '#3b82f6', '#f97316', '#ef4444'],
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            maxBarThickness: 22
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 10, right: 18, bottom: 10, left: 10 } },
+                        animation: { duration: 800, easing: 'easeOutQuart' },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    font: { size: 9 },
+                                    callback: v => Number.isInteger(v) ? v : ''
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            y: {
+                                ticks: {
+                                    font: { size: 10 }
+                                },
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.parsed.x)}`
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('taskPriorityChart', taskPriorityChart);
+            }
+
+            // BARU: Nama Pekerjaan Terbanyak
+            const taskJobCanvas = document.getElementById('taskJobChart');
+            if (taskJobCanvas) {
+                const taskJobChart = new Chart(taskJobCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Jumlah',
+                            data: [],
+                            backgroundColor: [],
+                            borderColor: '#0f766e',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            maxBarThickness: 22
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: { padding: { top: 10, right: 18, bottom: 10, left: 10 } },
+                        animation: { duration: 800, easing: 'easeOutQuart' },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    font: { size: 9 },
+                                    callback: v => Number.isInteger(v) ? v : ''
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                            },
+                            y: {
+                                ticks: {
+                                    font: { size: 10 },
+                                    callback: function (value, index, ticks) {
+                                        const label = this.getLabelForValue
+                                            ? this.getLabelForValue(value)
+                                            : (ticks[index]?.label ?? value);
+                                        return wrapLabel(label, 24);
+                                    }
+                                },
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${Math.round(ctx.parsed.x)}`
+                                }
+                            }
+                        }
+                    }
+                });
+                chartInstances.set('taskJobChart', taskJobChart);
+            }
+        }
+
+        function initJobFilterDropdowns() {
+            const limitMenu = document.getElementById('jobFilterLimitMenu');
+            const typeMenu = document.getElementById('jobFilterTypeMenu');
+            const limitBtn = document.getElementById('jobFilterLimitBtn');
+            const typeBtn = document.getElementById('jobFilterTypeBtn');
+
+            if (limitMenu && limitBtn) {
+                limitMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const limit = this.dataset.limit;
+                        if (!limit) return;
+
+                        jobViewState.limit = limit;
+                        limitBtn.textContent = this.textContent.trim();
+
+                        limitMenu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+
+                        if (chartInstances.has('jobChart')) {
+                            applyJobChartView();
+                        }
+                    });
+                });
+            }
+
+            if (typeMenu && typeBtn) {
+                typeMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const type = this.dataset.type;
+                        if (!type) return;
+
+                        jobViewState.type = type;
+                        typeBtn.textContent = this.textContent.trim();
+
+                        typeMenu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+
+                        if (chartInstances.has('jobChart')) {
+                            applyJobChartView();
+                        }
+                    });
+                });
+            }
+        }
+
+        function initSertPopularFilterDropdowns() {
+            const limitMenu = document.getElementById('sertFilterLimitMenu');
+            const typeMenu = document.getElementById('sertFilterTypeMenu');
+            const limitBtn = document.getElementById('sertFilterLimitBtn');
+            const typeBtn = document.getElementById('sertFilterTypeBtn');
+
+            if (limitMenu && limitBtn) {
+                limitMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const limit = this.dataset.limit;
+                        if (!limit) return;
+
+                        sertPopularViewState.limit = limit;
+                        limitBtn.textContent = this.textContent.trim();
+
+                        limitMenu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+
+                        if (chartInstances.has('sertNamaChart')) {
+                            applySertPopularView();
+                        }
+                    });
+                });
+            }
+
+            if (typeMenu && typeBtn) {
+                typeMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    item.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const type = this.dataset.type;
+                        if (!type) return;
+
+                        sertPopularViewState.type = type;
+                        typeBtn.textContent = this.textContent.trim();
+
+                        typeMenu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+
+                        if (chartInstances.has('sertNamaChart')) {
+                            applySertPopularView();
+                        }
+                    });
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            initializeCharts();
+            updateKPICards();
+            toggleSections();
+            initJobFilterDropdowns();
+            initSertPopularFilterDropdowns();
+
+            document.querySelectorAll('.chart-loading').forEach(l => l.style.display = 'block');
+
+            document.querySelectorAll('.chart-animate').forEach(container => {
+                chartObserver.observe(container);
+            });
+        });
+    </script>
+}

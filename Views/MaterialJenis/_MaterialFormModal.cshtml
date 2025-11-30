@@ -1,0 +1,169 @@
+﻿@model UtilitiesHR.Models.Material
+
+<div class="modal fade" id="modalMaterial" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tambah Material Baru</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Tutup"></button>
+            </div>
+
+            <form id="formMaterial"
+                  asp-action="Create"
+                  asp-controller="Materials"
+                  method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-body">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="KodeBarang" class="form-label">
+                                Kode Barang <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="KodeBarang"
+                                   class="form-control form-control-sm"
+                                   placeholder="Masukkan kode barang" />
+                            <span asp-validation-for="KodeBarang"
+                                  class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="NamaBarang" class="form-label">
+                                Nama Barang <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="NamaBarang"
+                                   class="form-control form-control-sm"
+                                   placeholder="Masukkan nama barang" />
+                            <span asp-validation-for="NamaBarang"
+                                  class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="JenisBarangId" class="form-label">
+                                Jenis Barang <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="JenisBarangId"
+                                    asp-items="ViewBag.JenisBarangId"
+                                    class="form-select form-select-sm select2-material-jenis">
+                                <option value="">Pilih jenis barang</option>
+                            </select>
+                            <span asp-validation-for="JenisBarangId"
+                                  class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="PosisiBarang" class="form-label">Posisi Barang</label>
+                            <input asp-for="PosisiBarang"
+                                   class="form-control form-control-sm"
+                                   placeholder="Masukkan posisi barang (opsional)" />
+                            <span asp-validation-for="PosisiBarang"
+                                  class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Satuan" class="form-label">Satuan</label>
+                            <input asp-for="Satuan"
+                                   class="form-control form-control-sm"
+                                   placeholder="Masukkan satuan (opsional)" />
+                            <span asp-validation-for="Satuan"
+                                  class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button"
+                            class="btn btn-outline-secondary btn-sm"
+                            data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> Batal
+                    </button>
+                    <button type="submit"
+                            class="btn btn-primary btn-sm">
+                        <i class="bi bi-check-lg"></i> Simpan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        const $modal = $('#modalMaterial');
+
+        // init select2 sama tema dengan modul lain
+        $modal.find('.select2-material-jenis').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            dropdownParent: $modal,
+            placeholder: 'Pilih jenis barang'
+        });
+
+        if ($.validator && $.validator.unobtrusive) {
+            $.validator.unobtrusive.parse('#formMaterial');
+        }
+
+        // submit pakai AJAX + SweetAlert seragam
+        $('#formMaterial').on('submit', function (e) {
+            e.preventDefault();
+            const $form = $(this);
+
+            $.ajax({
+                url: $form.attr('action'),
+                type: 'POST',
+                data: $form.serialize()
+            }).done(function (resp) {
+                if (resp && resp.success) {
+                    const m = bootstrap.Modal.getOrCreateInstance($modal[0]);
+                    m.hide();
+
+                    Swal.fire(
+                        'Berhasil',
+                        resp.message || 'Data material berhasil disimpan.',
+                        'success'
+                    ).then(function () {
+                        location.reload();
+                    });
+                } else {
+                    let msg = (resp && resp.message)
+                        ? resp.message
+                        : 'Gagal menyimpan data material.';
+
+                    if (resp && resp.errors && resp.errors.length) {
+                        msg += "<ul class='text-start mt-2'>";
+                        resp.errors.forEach(e => msg += `<li>${e}</li>`);
+                        msg += "</ul>";
+
+                        Swal.fire({
+                            title: 'Gagal',
+                            html: msg,
+                            icon: 'error'
+                        });
+                    } else {
+                        Swal.fire('Gagal', msg, 'error');
+                    }
+                }
+            }).fail(function () {
+                Swal.fire(
+                    'Gagal',
+                    'Gagal menyimpan data material (server error).',
+                    'error'
+                );
+            });
+        });
+
+        // optional: auto show kalau partial ini di-load via .load()
+        const inst = bootstrap.Modal.getOrCreateInstance($modal[0]);
+        inst.show();
+
+        $modal.on('hidden.bs.modal', function () {
+            // bersihkan DOM kalau mau
+            // $modal.remove();
+        });
+    });
+</script>

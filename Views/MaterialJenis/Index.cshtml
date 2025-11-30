@@ -1,0 +1,421 @@
+﻿@model IEnumerable<UtilitiesHR.Models.JenisBarang>
+
+@{
+    ViewData["Title"] = "Jenis Barang";
+    ViewData["Breadcrumb"] = "Jenis Barang";
+}
+
+<form id="jb-token-form" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Styles {
+    <style>
+        /* ===== HEADER ACTIONS (KANAN BREADCRUMB) ===== */
+        .jenis-actions .btn {
+            min-width: 38px;
+        }
+
+            .jenis-actions .btn i {
+                font-size: 1rem;
+            }
+
+        .btn-pill-outline {
+            background: #ffffff;
+            border-radius: 999px;
+            border: 1px solid #d0d7e6;
+            color: #0f172a;
+        }
+
+            .btn-pill-outline i {
+                color: #0a5db0;
+            }
+
+            .btn-pill-outline:hover {
+                background: #f3f6fb;
+                border-color: #c3cce3;
+            }
+
+        .btn-pill-primary {
+            border-radius: 999px;
+            background: #0f7bd9;
+            border-color: #0f7bd9;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+        }
+
+            .btn-pill-primary:hover {
+                background: #0a5db0;
+                border-color: #0a5db0;
+            }
+
+            .btn-pill-primary i {
+                color: #ffffff;
+            }
+
+        @@media (max-width: 575.98px) {
+            .jenis-actions .btn span {
+                display: none !important; /* HP: icon saja */
+            }
+
+            .jenis-actions .btn {
+                padding-inline: .55rem;
+            }
+        }
+
+        /* ===== WRAPPER CARD TABEL ===== */
+        .jenis-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            box-shadow: 0 10px 32px rgba(15,23,42,.06);
+            padding: 1.2rem 1.4rem;
+            background: #ffffff;
+            margin-top: .5rem;
+        }
+
+        .jenis-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+
+            .jenis-table thead th {
+                background-color: #f3f6fb;
+                color: #1f2937;
+                font-weight: 600;
+                font-size: .8rem;
+                padding: .7rem 1rem;
+                border-bottom: 2px solid #e1e6f0 !important;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+
+            .jenis-table tbody td {
+                padding: .65rem 1rem;
+                border-bottom: 1px solid #eef1f7;
+                vertical-align: middle;
+                font-size: .8rem;
+            }
+
+            .jenis-table tbody tr:nth-child(odd) {
+                background-color: #ffffff;
+            }
+
+            .jenis-table tbody tr:nth-child(even) {
+                background-color: #f9fafc;
+            }
+
+            .jenis-table tbody tr:hover {
+                background-color: #edf4ff;
+            }
+
+        .jenis-table-actions {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .35rem;
+            white-space: nowrap;
+        }
+
+        .jenis-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            font-size: 14px;
+            padding: 0;
+            box-shadow: 0 2px 6px rgba(15,23,42,.12);
+            transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+        }
+
+            .jenis-action-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 10px rgba(15,23,42,.16);
+            }
+
+        .jenis-action-edit {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .jenis-action-delete {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .jenis-action-edit:hover {
+            background: #fde68a;
+        }
+
+        .jenis-action-delete:hover {
+            background: #fecaca;
+        }
+
+        .jenis-action-btn:focus {
+            outline: 2px solid rgba(15,123,217,.35);
+            outline-offset: 1px;
+        }
+    </style>
+}
+
+@* ===== TOMBOL DI HEADER (SEJAJAR BREADCRUMB) ===== *@
+@section PageActions {
+    <div class="jenis-actions d-flex flex-wrap justify-content-end gap-2">
+        <button class="btn btn-pill-primary" id="btn-create-modal">
+            <i class="bi bi-plus-lg me-1"></i>
+            <span class="d-none d-md-inline">Jenis Barang</span>
+        </button>
+    </div>
+}
+
+@* ===== ISI HALAMAN SESUDAH HEADER GLOBAL ===== *@
+
+<div class="mb-2">
+    <div class="text-muted small">
+        Master jenis barang untuk material Utilities.
+    </div>
+</div>
+
+<div class="jenis-table-wrapper">
+    <div class="table-responsive">
+        <table id="tbl-jenis" class="table jenis-table align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:40px;">No</th>
+                    <th>Nama Jenis</th>
+                    <th>Keterangan</th>
+                    <th class="text-center" style="width:120px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model ?? Enumerable.Empty<UtilitiesHR.Models.JenisBarang>())
+                {
+                    <tr>
+                        <td class="text-center"></td>
+                        <td>@item.Nama</td>
+                        <td>@(string.IsNullOrWhiteSpace(item.Keterangan) ? "-" : item.Keterangan)</td>
+                        <td class="text-center">
+                            <div class="jenis-table-actions">
+                                <button class="jenis-action-btn jenis-action-edit btn-edit"
+                                        data-id="@item.Id" title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="jenis-action-btn jenis-action-delete btn-delete"
+                                        data-id="@item.Id"
+                                        data-nama="@item.Nama"
+                                        title="Hapus">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            const $ajaxModal  = $('#ajax-modal'); // pakai modal global dari _Layout
+            const $modalBody  = $ajaxModal.find('.modal-body');
+            const $modalTitle = $ajaxModal.find('.modal-title');
+
+            // ===== helper token anti-forgery =====
+            function getAfToken() {
+                return $('#jb-token-form input[name="__RequestVerificationToken"]').val();
+            }
+
+            // ===== DataTables =====
+            const tableJenis = $('#tbl-jenis').DataTable({
+                responsive: true,
+                dom:
+                    "<'row g-2 mb-2'<'col-12 col-md-6'l><'col-12 col-md-6'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
+                order: [[1, 'asc']],
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
+                language: {
+                    search: "Cari:",
+                    lengthMenu: "Tampilkan _MENU_ baris",
+                    info: "Menampilkan _START_–_END_ dari _TOTAL_ data",
+                    infoEmpty: "Tidak ada data",
+                    zeroRecords: "Tidak ditemukan data",
+                    paginate: { first: "<<", last: ">>", next: ">", previous: "<" }
+                },
+                columnDefs: [
+                    { targets: 0, orderable: false, searchable: false },
+                    {
+                        targets: 3,
+                        orderable: false,
+                        searchable: false,
+                        className: "text-center text-nowrap",
+                        responsivePriority: 1
+                    }
+                ]
+            });
+
+            // Penomoran kolom No
+            tableJenis.on('draw.dt', function () {
+                const info = tableJenis.page.info();
+                tableJenis.column(0, { search: 'applied', order: 'applied' })
+                    .nodes()
+                    .each(function (cell, i) {
+                        cell.innerHTML = info.start + i + 1;
+                    });
+            }).draw();
+
+            // ===== helper untuk show modal bootstrap 5 =====
+            function showAjaxModal(title) {
+                $modalTitle.text(title || 'Jenis Barang');
+                const instance = bootstrap.Modal.getOrCreateInstance($ajaxModal[0]);
+                instance.show();
+            }
+
+            // ===== CREATE =====
+            $('#btn-create-modal').on('click', function () {
+                $modalBody.html('<div class="text-center py-4 text-muted small">Memuat formulir…</div>');
+                showAjaxModal('Tambah Jenis Barang');
+
+                $.get('@Url.Action("Create", "MaterialJenis")')
+                    .done(function (html) {
+                        $modalBody.html(html);
+                    })
+                    .fail(function (xhr) {
+                        $modalBody.html(
+                            "<div class='alert alert-danger mb-0'>" +
+                            "Gagal memuat form: " + (xhr.responseText || xhr.statusText) +
+                            "</div>");
+                    });
+            });
+
+            // ===== EDIT =====
+            $('#tbl-jenis').on('click', '.btn-edit', function () {
+                const jenisId = $(this).data('id');
+                $modalBody.html('<div class="text-center py-4 text-muted small">Memuat formulir…</div>');
+                showAjaxModal('Edit Jenis Barang');
+
+                $.get('@Url.Action("Edit", "MaterialJenis")', { id: jenisId })
+                    .done(function (html) {
+                        $modalBody.html(html);
+                    })
+                    .fail(function (xhr) {
+                        $modalBody.html(
+                            "<div class='alert alert-danger mb-0'>" +
+                            "Gagal memuat form: " + (xhr.responseText || xhr.statusText) +
+                            "</div>");
+                    });
+            });
+
+            // ===== SUBMIT FORM (Create & Edit) =====
+            $('body').on('submit', '#formJenisBarangCreate, #formJenisBarangEdit', function (e) {
+                e.preventDefault();
+                const $form = $(this);
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize()
+                }).done(function (resp) {
+                    if (resp && resp.success) {
+                        const modalInstance = bootstrap.Modal.getOrCreateInstance($ajaxModal[0]);
+                        modalInstance.hide();
+
+                        Swal.fire(
+                            'Berhasil',
+                            resp.message || 'Data jenis barang berhasil disimpan.',
+                            'success'
+                        ).then(function () {
+                            location.reload();
+                        });
+                    } else {
+                        let msg = (resp && resp.message)
+                            ? resp.message
+                            : 'Gagal menyimpan data jenis barang.';
+
+                        if (resp && resp.errors && resp.errors.length) {
+                            msg += "<ul class='text-start mt-2 mb-0'>";
+                            resp.errors.forEach(e => msg += `<li>${e}</li>`);
+                            msg += "</ul>";
+
+                            Swal.fire({
+                                title: 'Gagal',
+                                html: msg,
+                                icon: 'error'
+                            });
+                        } else {
+                            Swal.fire('Gagal', msg, 'error');
+                        }
+                    }
+                }).fail(function () {
+                    Swal.fire(
+                        'Gagal',
+                        'Gagal menyimpan data jenis barang (server error).',
+                        'error'
+                    );
+                });
+            });
+
+            // ===== DELETE =====
+            $('#tbl-jenis').on('click', '.btn-delete', function () {
+                const jenisId   = $(this).data('id');
+                const namaJenis = $(this).data('nama');
+
+                Swal.fire({
+                    title: 'Hapus jenis barang?',
+                    text: `Jenis barang "${namaJenis}" akan dihapus dan tidak dapat dikembalikan.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, hapus',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    reverseButtons: false,
+                    focusCancel: true
+                }).then(function (result) {
+                    if (!result.isConfirmed) return;
+
+                    $.ajax({
+                        url: '@Url.Action("Delete", "MaterialJenis")',
+                        type: 'POST',
+                        data: {
+                            id: jenisId,
+                            "__RequestVerificationToken": getAfToken()
+                        }
+                    }).done(function (resp) {
+                        if (resp && resp.success) {
+                            Swal.fire(
+                                'Berhasil',
+                                resp.message || 'Jenis barang berhasil dihapus.',
+                                'success'
+                            ).then(function () {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire(
+                                'Gagal',
+                                (resp && resp.message)
+                                    ? resp.message
+                                    : 'Gagal menghapus jenis barang.',
+                                'error'
+                            );
+                        }
+                    }).fail(function (xhr) {
+                        let msg = 'Gagal menghapus jenis barang (server error).';
+                        if (xhr.status === 400) {
+                            msg = 'Token keamanan tidak valid. Silakan refresh halaman lalu coba lagi.';
+                        }
+                        Swal.fire('Gagal', msg, 'error');
+                    });
+                });
+            });
+
+        });
+    </script>
+}

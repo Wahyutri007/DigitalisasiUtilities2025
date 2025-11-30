@@ -1,0 +1,988 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model UtilitiesHR.Models.MaterialDetailsVM
+
+@{
+    ViewData["Title"] = "Detail Material - " + Model.NamaBarang;
+    ViewData["Breadcrumb"] = "Detail Material";
+
+    var start = ViewBag.StartDate as string;
+    var end = ViewBag.EndDate as string;
+
+    // ===== DATA UNTUK CHART (group per BULAN) =====
+    var grouped = Model.Txns
+        .GroupBy(t => new { t.Tanggal.Year, t.Tanggal.Month })
+        .OrderBy(g => g.Key.Year)
+        .ThenBy(g => g.Key.Month)
+        .Select(g => new
+        {
+            Label = g.Key.Month.ToString("00") + "/" + g.Key.Year, // contoh: 01/2025
+            Masuk = g.Where(x => x.Jenis == UtilitiesHR.Models.JenisTransaksi.Masuk).Sum(x => x.Jumlah),
+            Keluar = g.Where(x => x.Jenis == UtilitiesHR.Models.JenisTransaksi.Keluar).Sum(x => x.Jumlah)
+        })
+        .ToList();
+
+    var chartJson = System.Text.Json.JsonSerializer.Serialize(grouped);
+}
+
+@Html.AntiForgeryToken()
+
+@section Styles {
+    <style>
+        /* ===== HEADER ACTIONS (KANAN BREADCRUMB) ===== */
+        .material-actions .btn {
+            min-width: 38px;
+        }
+
+            .material-actions .btn i {
+                font-size: 1rem;
+            }
+
+        .btn-pill-outline {
+            background: #ffffff;
+            border-radius: 999px;
+            border: 1px solid #d0d7e6;
+            color: #0f172a;
+        }
+
+            .btn-pill-outline i {
+                color: #0a5db0;
+            }
+
+            .btn-pill-outline:hover {
+                background: #f3f6fb;
+                border-color: #c3cce3;
+            }
+
+        .btn-pill-primary {
+            border-radius: 999px;
+            background: #0f7bd9;
+            border-color: #0f7bd9;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+        }
+
+            .btn-pill-primary:hover {
+                background: #0a5db0;
+                border-color: #0a5db0;
+            }
+
+            .btn-pill-primary i {
+                color: #ffffff;
+            }
+
+        @@media (max-width: 575.98px) {
+            .material-actions .btn span {
+                display: none !important; /* HP: icon saja */
+            }
+
+            .material-actions .btn {
+                padding-inline: .55rem;
+            }
+        }
+
+        /* ===== WRAPPER CARD TABEL ===== */
+        .material-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            box-shadow: 0 10px 32px rgba(15,23,42,.06);
+            padding: 1.2rem 1.4rem;
+            background: #ffffff;
+            margin-top: .5rem;
+        }
+
+        .material-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+
+            .material-table thead th {
+                background-color: #f3f6fb;
+                color: #1f2937;
+                font-weight: 600;
+                font-size: .8rem;
+                padding: .7rem 1rem;
+                border-bottom: 2px solid #e1e6f0 !important;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+
+            .material-table tbody td {
+                padding: .65rem 1rem;
+                border-bottom: 1px solid #eef1f7;
+                vertical-align: middle;
+                font-size: .8rem;
+            }
+
+            .material-table tbody tr:nth-child(odd) {
+                background-color: #ffffff;
+            }
+
+            .material-table tbody tr:nth-child(even) {
+                background-color: #f9fafc;
+            }
+
+            .material-table tbody tr:hover {
+                background-color: #edf4ff;
+            }
+
+        .material-table-actions {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .35rem;
+            white-space: nowrap;
+        }
+
+        .material-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            font-size: 14px;
+            padding: 0;
+            box-shadow: 0 2px 6px rgba(15,23,42,.12);
+            transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+        }
+
+            .material-action-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 10px rgba(15,23,42,.16);
+            }
+
+        .material-action-info {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .material-action-edit {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .material-action-delete {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .material-action-info:hover {
+            background: #bae6fd;
+        }
+
+        .material-action-edit:hover {
+            background: #fde68a;
+        }
+
+        .material-action-delete:hover {
+            background: #fecaca;
+        }
+
+        .material-action-btn:focus {
+            outline: 2px solid rgba(15,123,217,.35);
+            outline-offset: 1px;
+        }
+
+        /* ===== STAT MINI CARD ===== */
+        .material-mini-card {
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            box-shadow: 0 6px 20px rgba(15,23,42,.05);
+        }
+
+            .material-mini-card label {
+                font-size: .78rem;
+                text-transform: uppercase;
+                letter-spacing: .03em;
+                color: #64748b;
+                margin-bottom: .1rem;
+            }
+
+            .material-mini-card h4 {
+                font-size: 1.4rem;
+                margin-bottom: 0;
+            }
+
+        .material-mini-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: .1rem;
+        }
+
+        .material-mini-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        /* ===== CHART CARD (STYLE GAMBAR 2) ===== */
+        .material-chart-card {
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            box-shadow: 0 8px 28px rgba(15,23,42,.05);
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .material-chart-header {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .7rem 1.1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .material-chart-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 14px;
+        }
+
+        .material-chart-title {
+            font-weight: 600;
+            font-size: .9rem;
+        }
+
+        .material-chart-subtitle {
+            font-size: .78rem;
+            color: #94a3b8;
+        }
+
+        .material-chart-body {
+            padding: .7rem 1rem 1rem;
+            flex: 1 1 auto;
+        }
+
+        /* ===== FILTER CARD (KANAN, STYLE GAMBAR 2) ===== */
+        .material-filter-card {
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            box-shadow: 0 8px 28px rgba(15,23,42,.05);
+            height: 100%;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .material-filter-header {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .7rem 1.1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .material-filter-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 14px;
+        }
+
+        .material-filter-title {
+            font-weight: 600;
+            font-size: .9rem;
+        }
+
+        .material-filter-subtitle {
+            font-size: .8rem;
+            color: #94a3b8;
+        }
+
+        .material-filter-body {
+            padding: .9rem 1.1rem 1.1rem;
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .material-filter-card .form-control-sm {
+            max-width: 100%;
+        }
+
+        @@media (max-width: 575.98px) {
+            .material-filter-card .form-control-sm {
+                min-width: 140px;
+            }
+        }
+    </style>
+}
+<div class="mb-2">
+
+    <div class="text-muted small">
+        Kode: @Model.KodeBarang |
+        Jenis: @Model.JenisBarang |
+        Posisi: @(Model.PosisiBarang ?? "-")
+    </div>
+</div>
+
+@* ====== TOMBOL DI HEADER (SEJAJAR BREADCRUMB – TERMASUK KEMBALI) ====== *@
+@section PageActions {
+    <div class="material-actions d-flex flex-wrap gap-2 justify-content-end">
+        <a asp-action="Index"
+           class="btn btn-pill-outline">
+            <i class="bi bi-arrow-left me-1"></i>
+            <span class="d-none d-md-inline">Kembali ke Material</span>
+        </a>
+
+        <button class="btn btn-pill-outline" id="btn-edit-material">
+            <i class="bi bi-pencil-square me-1"></i>
+            <span class="d-none d-md-inline">Edit Material</span>
+        </button>
+
+        <button class="btn btn-pill-outline" id="btn-barang-masuk">
+            <i class="bi bi-plus-lg me-1"></i>
+            <span class="d-none d-md-inline">Barang Masuk</span>
+        </button>
+
+        <button class="btn btn-pill-primary" id="btn-barang-keluar">
+            <i class="bi bi-dash-lg me-1"></i>
+            <span class="d-none d-md-inline">Barang Keluar</span>
+        </button>
+
+        <div class="btn-group">
+            <button class="btn btn-pill-outline dropdown-toggle"
+                    type="button"
+                    data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>
+                <span class="d-none d-md-inline">Export</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li class="dropdown-header small text-muted">
+                    Export Riwayat Transaksi
+                </li>
+                <li>
+                    <button type="button"
+                            class="dropdown-item"
+                            id="btn-export-xlsx-header">
+                        <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+                    </button>
+                </li>
+                <li>
+                    <button type="button"
+                            class="dropdown-item"
+                            id="btn-export-csv-header">
+                        <i class="bi bi-filetype-csv me-1"></i>Export CSV
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+}
+
+
+
+<!-- STAT MINI CARD -->
+<div class="row g-3 mb-3">
+    <div class="col-lg-3 col-md-6">
+        <div class="card card-body text-center shadow-sm material-mini-card">
+            <div class="material-mini-head">
+                <label>Stok Tersedia</label>
+                <span class="material-mini-icon">
+                    <i class="bi bi-box-seam"></i>
+                </span>
+            </div>
+            <h4 class="mb-0">
+                @Model.Stok <small class="fw-normal">@Model.Satuan</small>
+            </h4>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card card-body text-center shadow-sm material-mini-card">
+            <div class="material-mini-head">
+                <label>Masuk Bulan Ini</label>
+                <span class="material-mini-icon">
+                    <i class="bi bi-arrow-down-circle"></i>
+                </span>
+            </div>
+            <h4 class="mb-0">@Model.MasukBulanIni</h4>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card card-body text-center shadow-sm material-mini-card">
+            <div class="material-mini-head">
+                <label>Keluar Bulan Ini</label>
+                <span class="material-mini-icon">
+                    <i class="bi bi-arrow-up-circle"></i>
+                </span>
+            </div>
+            <h4 class="mb-0">@Model.KeluarBulanIni</h4>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card card-body text-center shadow-sm material-mini-card">
+            <div class="material-mini-head">
+                <label>Total Masuk</label>
+                <span class="material-mini-icon">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </span>
+            </div>
+            <h4 class="mb-0">@Model.TotalMasuk</h4>
+        </div>
+    </div>
+</div>
+
+<!-- BARIS: KIRI GRAFIK, KANAN FILTER -->
+<div class="row g-3 mb-3 align-items-stretch">
+    <div class="col-lg-8">
+        <div class="material-chart-card">
+            <div class="material-chart-header">
+                <span class="material-chart-icon">
+                    <i class="bi bi-bar-chart-line"></i>
+                </span>
+                <div>
+                    <div class="material-chart-title">
+                        Grafik Barang Masuk & Keluar per Bulan
+                    </div>
+                    <div class="material-chart-subtitle">
+                        Total kuantitas transaksi berdasarkan bulan.
+                    </div>
+                </div>
+            </div>
+            <div class="material-chart-body">
+                <div style="width:100%; height:220px;">
+                    <canvas id="txnChart" style="width:100%; height:100%;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="material-filter-card">
+            <div class="material-filter-header">
+                <span class="material-filter-icon">
+                    <i class="bi bi-funnel"></i>
+                </span>
+                <div>
+                    <div class="material-filter-title">Filter Data</div>
+                    <div class="material-filter-subtitle">
+                        Tampilkan riwayat berdasarkan rentang tanggal.
+                    </div>
+                </div>
+            </div>
+            <div class="material-filter-body">
+                <!-- BARIS 1 & 2: Input tanggal -->
+                <form id="filter-form"
+                      method="get"
+                      class="d-flex flex-column gap-2 mb-3 w-100">
+                    <input type="hidden" name="id" value="@Model.Id" />
+
+                    <!-- Baris 1: Dari -->
+                    <div class="d-flex flex-column">
+                        <label class="small mb-1">Dari</label>
+                        <input type="date"
+                               name="startDate"
+                               id="filter-start"
+                               value="@start"
+                               class="form-control form-control-sm" />
+                    </div>
+
+                    <!-- Baris 2: Sampai -->
+                    <div class="d-flex flex-column">
+                        <label class="small mb-1">Sampai</label>
+                        <input type="date"
+                               name="endDate"
+                               id="filter-end"
+                               value="@end"
+                               class="form-control form-control-sm" />
+                    </div>
+
+                    <!-- Baris 3: Tombol Filter / Reset -->
+                    <div class="d-flex gap-2 mt-1">
+                        <button type="submit"
+                                class="btn btn-sm btn-primary flex-fill">
+                            <i class="bi bi-funnel me-1"></i> Filter
+                        </button>
+                        <a asp-action="Details"
+                           asp-route-id="@Model.Id"
+                           class="btn btn-sm btn-outline-secondary flex-fill">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                        </a>
+                    </div>
+                </form>
+
+                <hr class="my-2" />
+
+                <!-- Baris 4: Tombol Aksi (Bulk delete) -->
+                <button class="btn btn-outline-danger btn-sm w-100"
+                        id="btn-bulk-delete-txn"
+                        style="display:none;">
+                    <i class="bi bi-trash"></i>
+                    <span class="d-none d-md-inline">Hapus Pilihan</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TABEL TRANSAKSI (ADA KOLOM NO) -->
+<div class="material-table-wrapper">
+    <div class="table-responsive">
+        <table id="tbl-txns"
+               class="table material-table align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:30px;">No</th>
+                    <th class="text-center" style="width:34px;">
+                        <input type="checkbox" class="form-check-input" id="check-all-txn" />
+                    </th>
+                    <th>Tanggal</th>
+                    <th>Jenis</th>
+                    <th>Jumlah</th>
+                    <th>Sisa Stok</th>
+                    <th>Penanggung Jawab</th>
+                    <th>Keterangan</th>
+                    <th class="text-center" data-priority="1">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.Txns)
+                {
+                    <tr data-id="@t.Id">
+                        <td class="text-center"></td>
+                        <td class="text-center">
+                            <input type="checkbox"
+                                   class="form-check-input check-txn-item"
+                                   data-id="@t.Id" />
+                        </td>
+                        <td>@t.Tanggal.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @if (t.Jenis == UtilitiesHR.Models.JenisTransaksi.Masuk)
+                            {
+                                <span class="badge bg-success">Masuk</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Keluar</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @(t.Jenis == UtilitiesHR.Models.JenisTransaksi.Masuk ? "+" : "-")@t.Jumlah
+                        </td>
+                        <td class="text-center fw-bold">@t.SisaStok</td>
+                        <td>@t.PenanggungJawab</td>
+                        <td>@t.Keterangan</td>
+                        <td class="text-center">
+                            <div class="material-table-actions">
+                                <button class="material-action-btn material-action-edit btn-edit-txn"
+                                        data-id="@t.Id"
+                                        title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="material-action-btn material-action-delete btn-delete-txn"
+                                        data-id="@t.Id"
+                                        title="Hapus">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal AJAX lokal -->
+<div class="modal fade" id="ajax-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ajax-modal-title">Modal</h5>
+                <button type="button" class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Chart.js untuk grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        $(function () {
+            const $ajaxModal = $('#ajax-modal');
+            const $modalBody = $ajaxModal.find('.modal-body');
+            const $modalTitle = $ajaxModal.find('.modal-title');
+
+            function initSelect2() {
+                const selects = $modalBody.find('.select2-modal');
+                if (!selects.length) return;
+                selects.each(function () {
+                    const $s = $(this);
+                    if ($s.data('select2')) $s.select2('destroy');
+                    $s.select2({
+                        theme: "bootstrap-5",
+                        dropdownParent: $ajaxModal.find('.modal-content'),
+                        tags: true
+                    });
+                });
+            }
+
+            // ====== CHART BARANG MASUK & KELUAR PER BULAN ======
+            const chartData = @Html.Raw(chartJson);
+            if (chartData && chartData.length) {
+                const labels = chartData.map(x => x.Label);
+                const masuk = chartData.map(x => x.Masuk);
+                const keluar = chartData.map(x => x.Keluar);
+
+                const ctx = document.getElementById('txnChart');
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Masuk',
+                                    data: masuk,
+                                    backgroundColor: '#3b82f6',
+                                    hoverBackgroundColor: '#2563eb',
+                                    borderWidth: 0,
+                                    borderRadius: 14,
+                                    borderSkipped: false,
+                                    maxBarThickness: 40
+                                },
+                                {
+                                    label: 'Keluar',
+                                    data: keluar,
+                                    backgroundColor: '#fb7185',
+                                    hoverBackgroundColor: '#f97373',
+                                    borderWidth: 0,
+                                    borderRadius: 14,
+                                    borderSkipped: false,
+                                    maxBarThickness: 40
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        boxWidth: 10,
+                                        boxHeight: 10,
+                                        padding: 16
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function (ctx) {
+                                            const v = ctx.parsed.y || 0;
+                                            return ctx.dataset.label + ': ' +
+                                                v.toLocaleString('id-ID');
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(148,163,184,.35)',
+                                        drawBorder: false
+                                    },
+                                    ticks: {
+                                        callback: function (value) {
+                                            return value.toLocaleString('id-ID');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // ====== DataTables transaksi ======
+            const table = $('#tbl-txns').DataTable({
+                responsive: true,
+                dom:
+                    "<'row g-2 mb-3'<'col-6 col-md-4'l><'col-6 col-md-4 offset-md-4'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
+                order: [[2, 'asc']], // urut Tanggal (kolom index 2)
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
+                language: {
+                    search: 'Cari:',
+                    lengthMenu: '_MENU_ baris',
+                    info: '_START_–_END_ dari _TOTAL_',
+                    infoEmpty: 'Tidak ada data',
+                    zeroRecords: 'Tidak ditemukan',
+                    paginate: {
+                        first: '<<',
+                        last: '>>',
+                        next: '>',
+                        previous: '<'
+                    }
+                },
+                columnDefs: [
+                    { targets: 0, orderable: false, searchable: false }, // No
+                    { targets: 1, orderable: false, searchable: false }, // checkbox
+                    { targets: 8, orderable: false, searchable: false }  // aksi
+                ]
+            });
+
+            // Penomoran kolom No
+            table.on('draw.dt', function () {
+                const info = table.page.info();
+                table.column(0, { search: 'applied', order: 'applied' })
+                    .nodes()
+                    .each(function (cell, i) {
+                        cell.innerHTML = info.start + i + 1;
+                    });
+            }).draw();
+
+            function buildExportUrl(actionName) {
+                let url = '@Url.Action("__dummy__", "Materials", new { id = Model.Id })'
+                    .replace('__dummy__', actionName);
+
+                const start = $('#filter-start').val();
+                const end = $('#filter-end').val();
+                const params = [];
+                if (start) params.push('startDate=' + encodeURIComponent(start));
+                if (end) params.push('endDate=' + encodeURIComponent(end));
+                if (params.length > 0) {
+                    url += (url.indexOf('?') >= 0 ? '&' : '?') + params.join('&');
+                }
+                return url;
+            }
+
+            // ====== EXPORT (dropdown di header) ======
+            $('#btn-export-xlsx-header').on('click', function () {
+                window.location = buildExportUrl('ExportTransactions');
+            });
+
+            $('#btn-export-csv-header').on('click', function () {
+                window.location = buildExportUrl('ExportTransactionsCsv');
+            });
+
+            // ====== Barang Masuk ======
+            $('#btn-barang-masuk').on('click', function () {
+                $modalTitle.text('Barang Masuk');
+                $modalBody.html("<div class='text-center py-4 text-muted small'>Memuat formulir…</div>");
+                $modalBody.load('@Url.Action("TxnCreate", "Materials")?materialId=@Model.Id&jenis=1',
+                    function (res, status) {
+                        if (status === 'error') {
+                            $modalBody.html("<div class='alert alert-danger mb-0'>Gagal memuat form.</div>");
+                        }
+                        initSelect2();
+                        $ajaxModal.modal('show');
+                    });
+            });
+
+            // ====== Barang Keluar ======
+            $('#btn-barang-keluar').on('click', function () {
+                $modalTitle.text('Barang Keluar');
+                $modalBody.html("<div class='text-center py-4 text-muted small'>Memuat formulir…</div>");
+                $modalBody.load('@Url.Action("TxnCreate", "Materials")?materialId=@Model.Id&jenis=2',
+                    function (res, status) {
+                        if (status === 'error') {
+                            $modalBody.html("<div class='alert alert-danger mb-0'>Gagal memuat form.</div>");
+                        }
+                        initSelect2();
+                        $ajaxModal.modal('show');
+                    });
+            });
+
+            // ====== Edit Material ======
+            $('#btn-edit-material').on('click', function () {
+                $modalTitle.text('Edit Material');
+                $modalBody.html("<div class='text-center py-4 text-muted small'>Memuat formulir…</div>");
+                $modalBody.load('@Url.Action("Edit", "Materials")?id=@Model.Id',
+                    function (res, status) {
+                        if (status === 'error') {
+                            $modalBody.html("<div class='alert alert-danger mb-0'>Gagal memuat form.</div>");
+                        } else {
+                            initSelect2();
+                        }
+                        $ajaxModal.modal('show');
+                    });
+            });
+
+            // ====== Edit Transaksi ======
+            $('#tbl-txns').on('click', '.btn-edit-txn', function () {
+                const id = $(this).data('id');
+                $modalTitle.text('Edit Transaksi');
+                $modalBody.html("<div class='text-center py-4 text-muted small'>Memuat formulir…</div>");
+                $modalBody.load('@Url.Action("EditTxn", "Materials")?id=' + id,
+                    function (res, status) {
+                        if (status === 'error') {
+                            $modalBody.html("<div class='alert alert-danger mb-0'>Gagal memuat form.</div>");
+                        }
+                        $ajaxModal.modal('show');
+                    });
+            });
+
+            // ====== Submit form dalam modal (Create/Edit) ======
+            $('body').on('submit', '#ajax-form', function (e) {
+                e.preventDefault();
+                const $form = $(this);
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    success: function (res) {
+                        if (res && res.success === true) {
+                            $ajaxModal.modal('hide');
+                            Swal.fire('Berhasil', res.message, 'success')
+                                .then(() => location.reload());
+                        } else if (res && res.success === false) {
+                            Swal.fire('Gagal', res.message, 'error');
+                        } else {
+                            $modalBody.html(res);
+                            initSelect2();
+                            $.validator.unobtrusive.parse('#ajax-form');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                    }
+                });
+            });
+
+            // ====== Hapus transaksi tunggal ======
+            $('#tbl-txns').on('click', '.btn-delete-txn', function () {
+                const id = $(this).data('id');
+                Swal.fire({
+                    title: 'Hapus transaksi?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Ya, hapus',
+                    cancelButtonText: 'Batal'
+                }).then(r => {
+                    if (!r.isConfirmed) return;
+
+                    $.post('@Url.Action("DeleteTxn", "Materials")/' + id, {
+                        "__RequestVerificationToken":
+                            $('input[name="__RequestVerificationToken"]').val()
+                    })
+                        .done(res => {
+                            if (res.success) {
+                                Swal.fire('Berhasil', res.message, 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire('Gagal', res.message, 'error');
+                            }
+                        })
+                        .fail(() => {
+                            Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                        });
+                });
+            });
+
+            // ====== Bulk delete ======
+            const $btnBulk = $('#btn-bulk-delete-txn');
+            const $checkAll = $('#check-all-txn');
+
+            function toggleBulkButton() {
+                const any = $('.check-txn-item:checked').length > 0;
+                $btnBulk.toggle(any);
+            }
+
+            $checkAll.on('change', function () {
+                const checked = this.checked;
+                $('.check-txn-item').prop('checked', checked);
+                toggleBulkButton();
+            });
+
+            $('#tbl-txns').on('change', '.check-txn-item', function () {
+                const all = $('.check-txn-item').length === $('.check-txn-item:checked').length;
+                $checkAll.prop('checked', all);
+                toggleBulkButton();
+            });
+
+            $btnBulk.on('click', function () {
+                const ids = $('.check-txn-item:checked')
+                    .map(function () { return $(this).data('id'); })
+                    .get();
+
+                if (!ids.length) {
+                    Swal.fire('Info', 'Pilih transaksi terlebih dahulu.', 'info');
+                    return;
+                }
+
+                Swal.fire({
+                    title: `Hapus ${ids.length} transaksi?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Ya, hapus',
+                    cancelButtonText: 'Batal'
+                }).then(r => {
+                    if (!r.isConfirmed) return;
+
+                    $.ajax({
+                        url: '@Url.Action("DeleteTxnBulk", "Materials")',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(ids),
+                        headers: {
+                            'RequestVerificationToken':
+                                $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function (res) {
+                            if (res.success) {
+                                Swal.fire('Berhasil', res.message, 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire('Gagal', res.message, 'error');
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}

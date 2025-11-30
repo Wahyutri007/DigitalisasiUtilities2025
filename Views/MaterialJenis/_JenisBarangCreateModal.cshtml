@@ -1,0 +1,44 @@
+﻿@model UtilitiesHR.Models.JenisBarang
+
+<form asp-action="Create" id="formJenisBarangCreate">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+    <div class="row g-3">
+        <div class="col-12">
+            <label class="form-label">Nama Jenis Barang <span class="text-danger">*</span></label>
+            <input asp-for="Nama"
+                   class="form-control form-control-sm"
+                   placeholder="Masukkan nama jenis barang"
+                   required />
+            <span class="text-danger small" asp-validation-for="Nama"></span>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">Keterangan</label>
+            <textarea asp-for="Keterangan"
+                      class="form-control form-control-sm"
+                      rows="3"
+                      placeholder="Masukkan keterangan (opsional)"></textarea>
+            <span class="text-danger small" asp-validation-for="Keterangan"></span>
+        </div>
+
+        <div class="col-12 d-flex justify-content-end gap-2 mt-3">
+            <button type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    data-bs-dismiss="modal">
+                <i class="bi bi-x-lg"></i> Batal
+            </button>
+            <button type="submit"
+                    class="btn btn-primary btn-sm">
+                <i class="bi bi-check-lg"></i> Simpan
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+    if ($.validator && $.validator.unobtrusive) {
+        $.validator.unobtrusive.parse('#formJenisBarangCreate');
+    }
+</script>

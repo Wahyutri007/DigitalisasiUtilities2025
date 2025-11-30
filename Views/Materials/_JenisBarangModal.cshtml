@@ -1,0 +1,69 @@
+﻿@model UtilitiesHR.Models.JenisBarang
+
+<div class="modal fade" id="modalJenis" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <form asp-action="JenisCreate" method="post" id="frmJenisCreate">
+                @Html.AntiForgeryToken()
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Tambah Jenis Barang</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="Nama" class="form-label"></label>
+                            <input asp-for="Nama" class="form-control" />
+                            <span asp-validation-for="Nama" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Keterangan" class="form-label"></label>
+                            <input asp-for="Keterangan" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i> Batal
+                    </button>
+                    <button class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> Simpan
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const modalEl = document.getElementById('modalJenis');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                $(modalEl).remove();
+            });
+
+            $('#frmJenisCreate').on('submit', async function (e) {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const fd = new FormData(form);
+                const resp = await fetch(form.action, { method: 'POST', body: fd });
+                const data = await resp.json().catch(() => ({}));
+
+                if (resp.ok && data.ok) {
+                    window.dispatchEvent(new CustomEvent('jenis:saved', {
+                        detail: { id: data.id, nama: data.nama }
+                    }));
+                    modalInstance.hide();
+                } else {
+                    $(form).closest('.modal-content').html(await resp.text());
+                }
+            });
+        })();
+    </script>
+}

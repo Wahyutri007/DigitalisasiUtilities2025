@@ -1,0 +1,599 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model IEnumerable<UtilitiesHR.Models.Dinas>
+@using UtilitiesHR.Models
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Dinas Pekerja";
+    ViewData["Breadcrumb"] = "Dinas Pekerja";
+
+    // --- Persiapan Data View ---
+    var employees = ViewBag.Employees as SelectList ?? new SelectList(Enumerable.Empty<object>());
+    var tahunList = ViewBag.TahunList as IEnumerable<int> ?? Enumerable.Empty<int>();
+    int? selectedYear = ViewBag.SelectedYear as int?;
+    bool isDetailMode = ViewBag.IsDetailMode is bool b && b;
+
+    // --- Statistik ---
+    int totalTahun = ViewBag.TotalTahun is int a ? a : 0;
+    int bulanIni = ViewBag.BulanIni is int c ? c : 0;
+    int sedangJalan = ViewBag.MasihBerlaku is int d ? d : 0;
+    int sudahAkhir = ViewBag.SudahExpired is int e ? e : 0;
+
+    // --- Query Strings untuk Filter & Export ---
+    var qsEmployeeId = Context.Request.Query["employeeId"].ToString();
+    var qsYear = Context.Request.Query["year"].ToString();
+    var qsQ = Context.Request.Query["q"].ToString();
+
+    // --- Data untuk Tabel Ringkasan ---
+    var grouped = ViewBag.GroupRows as IEnumerable<GroupRow> ?? Enumerable.Empty<GroupRow>();
+}
+
+<form id="token-form" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Styles {
+    <style>
+        /* CARD STAT DINAS – seragam ukuran & style */
+        .dinas-stat-row {
+            margin-bottom: 1.1rem;
+        }
+
+        .dinas-stat-card {
+            position: relative;
+            border-radius: 16px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 8px 24px rgba(15,23,42,.06);
+            padding: 0.9rem 1.05rem;
+            min-height: 100px; /* <== lebih kecil */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .dinas-stat-label {
+            font-size: .76rem;
+            font-weight: 600;
+            letter-spacing: .03em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: .25rem;
+        }
+
+        .dinas-stat-value {
+            font-size: 1.4rem; /* <== angka sedikit mengecil */
+            font-weight: 700;
+            color: #1d4ed8;
+        }
+
+        .dinas-stat-caption {
+            font-size: .73rem;
+            color: #94a3b8;
+            margin-top: .15rem;
+        }
+
+        .dinas-stat-icon {
+            position: absolute;
+            top: .6rem;
+            right: .85rem;
+            width: 30px; /* <== icon mengecil */
+            height: 30px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 14px rgba(15,23,42,.12);
+        }
+
+            .dinas-stat-icon .bi {
+                font-size: 1rem;
+            }
+
+        .dinas-stat-total .dinas-stat-icon {
+            background: #e0ecff;
+            color: #1d4ed8;
+        }
+
+        .dinas-stat-bulan .dinas-stat-icon {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .dinas-stat-aktif .dinas-stat-icon {
+            background: #fef9c3;
+            color: #f59e0b;
+        }
+
+        .dinas-stat-selesai .dinas-stat-icon {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        /* FILTER ROW */
+        .dinas-filter-row {
+            margin-bottom: 1rem;
+        }
+
+        /* TABEL RINGKASAN/DETAIL */
+        .dinas-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            box-shadow: 0 10px 32px rgba(15,23,42,.06);
+            padding: 1rem 1.2rem; /* sedikit lebih rapat */
+            background: #ffffff;
+        }
+
+        .dinas-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+
+            .dinas-table thead th {
+                background-color: #f3f6fb;
+                color: #1f2937;
+                font-weight: 600;
+                font-size: .8rem;
+                padding: .7rem 1rem;
+                border-bottom: 2px solid #e1e6f0 !important;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+
+            .dinas-table tbody td {
+                padding: .65rem 1rem;
+                border-bottom: 1px solid #eef1f7;
+                vertical-align: middle;
+                font-size: .8rem;
+            }
+
+            .dinas-table tbody tr:nth-child(odd) {
+                background-color: #ffffff;
+            }
+
+            .dinas-table tbody tr:nth-child(even) {
+                background-color: #f9fafc;
+            }
+
+            .dinas-table tbody tr:hover {
+                background-color: #edf4ff;
+            }
+
+        .dinas-table-actions {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .35rem;
+            white-space: nowrap;
+        }
+
+        .dinas-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            font-size: 14px;
+            padding: 0;
+            box-shadow: 0 2px 6px rgba(15,23,42,.12);
+            transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+        }
+
+            .dinas-action-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 10px rgba(15,23,42,.16);
+            }
+
+        .dinas-action-info {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .dinas-action-edit {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .dinas-action-delete {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .dinas-action-info:hover {
+            background: #bae6fd;
+        }
+
+        .dinas-action-edit:hover {
+            background: #fde68a;
+        }
+
+        .dinas-action-delete:hover {
+            background: #fecaca;
+        }
+
+        .dinas-action-btn:focus {
+            outline: 2px solid rgba(15,123,217,.35);
+            outline-offset: 1px;
+        }
+
+        @@media (max-width: 575.98px) {
+            .dinas-stat-card {
+                padding: .8rem .95rem;
+                min-height: 95px;
+            }
+        }
+    </style>
+}
+
+@* ====== TOMBOL AKSI DI HEADER (SEJAJAR DENGAN BREADCRUMB) ====== *@
+@section PageActions {
+    <button class="btn btn-pill-outline" id="btn-import-modal">
+        <i class="bi bi-file-earmark-arrow-up me-1"></i>
+        <span class="d-none d-md-inline">Import</span>
+    </button>
+
+    <div class="btn-group">
+        <button class="btn btn-pill-outline dropdown-toggle" data-bs-toggle="dropdown" type="button">
+            <i class="bi bi-download me-1"></i>
+            <span class="d-none d-md-inline">Template &amp; Export</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li class="dropdown-header">Template Import</li>
+            <li>
+                <a class="dropdown-item" asp-action="DownloadImportTemplate">
+                    <i class="bi bi-file-earmark-excel me-1"></i>Template Excel
+                </a>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            <li class="dropdown-header">Export Data</li>
+            <li>
+                <a class="dropdown-item"
+                   asp-action="ExportExcel"
+                   asp-route-employeeId="@qsEmployeeId"
+                   asp-route-year="@qsYear"
+                   asp-route-q="@qsQ">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i>Export Excel
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item"
+                   asp-action="ExportCsv"
+                   asp-route-employeeId="@qsEmployeeId"
+                   asp-route-year="@qsYear"
+                   asp-route-q="@qsQ">
+                    <i class="bi bi-filetype-csv me-1"></i>Export CSV
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <button class="btn btn-pill-primary" id="btn-create-modal">
+        <i class="bi bi-plus-lg me-1"></i>
+        <span class="d-none d-md-inline">Input Dinas</span>
+    </button>
+}
+
+@* ====== ISI HALAMAN (SETELAH HEADER GLOBAL) ====== *@
+
+
+
+<!-- STAT CARD -->
+<div class="row g-3 dinas-stat-row">
+    <div class="col-md-3">
+        <div class="dinas-stat-card dinas-stat-total">
+            <div class="dinas-stat-icon">
+                <i class="bi bi-briefcase-fill"></i>
+            </div>
+            <div class="dinas-stat-label">Total Dinas Terfilter</div>
+            <div class="dinas-stat-value">@totalTahun</div>
+            <div class="dinas-stat-caption">
+                @(selectedYear.HasValue ? $"Berdasarkan filter aktif tahun {selectedYear}" : "Berdasarkan filter aktif")
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dinas-stat-card dinas-stat-bulan">
+            <div class="dinas-stat-icon">
+                <i class="bi bi-calendar-event-fill"></i>
+            </div>
+            <div class="dinas-stat-label">Dinas Bulan Ini</div>
+            <div class="dinas-stat-value">@bulanIni</div>
+            <div class="dinas-stat-caption">Periode bulan berjalan</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dinas-stat-card dinas-stat-aktif">
+            <div class="dinas-stat-icon">
+                <i class="bi bi-play-fill"></i>
+            </div>
+            <div class="dinas-stat-label">Sedang Berlangsung</div>
+            <div class="dinas-stat-value">@sedangJalan</div>
+            <div class="dinas-stat-caption">Masih aktif s/d hari ini</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="dinas-stat-card dinas-stat-selesai">
+            <div class="dinas-stat-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="dinas-stat-label">Sudah Berakhir</div>
+            <div class="dinas-stat-value">@sudahAkhir</div>
+            <div class="dinas-stat-caption">Dinas yang sudah selesai</div>
+        </div>
+    </div>
+</div>
+
+<div class="dinas-table-wrapper">
+    @if (!isDetailMode)
+    {
+        <!-- RINGKASAN -->
+        <table id="tbl-ringkasan" class="table dinas-table align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:20px;">#</th>
+                    <th>Nama</th>
+                    <th>Nopeg</th>
+                    <th class="text-center">Jumlah Dinas</th>
+                    <th class="text-center" data-priority="1">Detail</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in grouped)
+                {
+                    <tr>
+                        <td class="text-center"></td>
+                        <td>@r.Nama</td>
+                        <td>@r.Nopeg</td>
+                        <td class="text-center">@r.Jumlah</td>
+                        <td class="text-center">
+                            <a class="btn btn-sm btn-outline-secondary"
+                               asp-action="Index"
+                               asp-route-employeeId="@r.EmployeeId"
+                               asp-route-year="@qsYear"
+                               asp-route-q="@qsQ">
+                                <i class="bi bi-search"></i> Detail
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <!-- DETAIL PER PEKERJA -->
+        <table id="tbl-detail" class="table dinas-table align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:20px;">#</th>
+                    <th>Nama</th>
+                    <th>Nopeg</th>
+                    <th>Jenis</th>
+                    <th>Sifat</th>
+                    <th>Berangkat</th>
+                    <th>Pulang</th>
+                    <th class="text-center">Hari</th>
+                    <th>Lokasi</th>
+                    <th>Kegiatan</th>
+                    <th class="text-center" data-priority="1">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var it in Model ?? Enumerable.Empty<Dinas>())
+                {
+                    <tr>
+                        <td class="text-center"></td>
+                        <td>@it.Employee?.NamaLengkap</td>
+                        <td>@it.Employee?.NopegPersero</td>
+                        <td>@it.JenisDinas?.Nama</td>
+                        <td>@(it.Sifat?.ToString() ?? "-")</td>
+                        <td>@it.TanggalBerangkat.ToString("dd/MM/yyyy")</td>
+                        <td>@it.TanggalPulang.ToString("dd/MM/yyyy")</td>
+                        <td class="text-center">@it.LamaHari</td>
+                        <td>@(string.IsNullOrWhiteSpace(it.Lokasi) ? "-" : it.Lokasi)</td>
+                        <td>@it.Kegiatan</td>
+                        <td class="text-center">
+                            <div class="dinas-table-actions">
+                                <button class="dinas-action-btn dinas-action-info btn-info-modal"
+                                        data-id="@it.Id" title="Detail">
+                                    <i class="bi bi-info-circle"></i>
+                                </button>
+                                <button class="dinas-action-btn dinas-action-edit btn-edit-modal"
+                                        data-id="@it.Id" title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="dinas-action-btn dinas-action-delete btn-delete"
+                                        data-id="@it.Id" title="Hapus">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            // ================== Filter Select2 ==================
+            $('#employeeId').select2({ theme: 'bootstrap-5', width: '100%' });
+            $('#employeeId').val('@qsEmployeeId').trigger('change.select2');
+            $('#year').val('@qsYear');
+
+            // ================== DataTables ==================
+            const dtLang = {
+                search: "Cari:",
+                lengthMenu: "_MENU_ baris",
+                info: "_START_–_END_ dari _TOTAL_",
+                infoEmpty: "Tidak ada data",
+                zeroRecords: "Tidak ditemukan",
+                paginate: { first: "<<", last: ">>", next: ">", previous: "<" }
+            };
+
+            function addRowNumber(dt) {
+                dt.on('draw.dt', function () {
+                    const info = dt.page.info();
+                    dt.column(0, { search: 'applied', order: 'applied' })
+                        .nodes().each((cell, i) => cell.innerHTML = info.start + i + 1);
+                }).draw();
+            }
+
+            if ($('#tbl-ringkasan').length) {
+                const tRingkasan = $('#tbl-ringkasan').DataTable({
+                    responsive: true,
+                    dom:
+                        "<'row g-2 mb-3'<'col-6 col-md-4'l><'col-6 col-md-4 offset-md-4'f>>" +
+                        "<'row'<'col-sm-12'tr>>" +
+                        "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
+                    order: [[1, 'asc']],
+                    pageLength: 25,
+                    lengthMenu: [10, 25, 50, 100],
+                    language: dtLang,
+                    columnDefs: [
+                        { targets: 0, orderable: false, searchable: false },
+                        { targets: 4, orderable: false, searchable: false }
+                    ]
+                });
+                addRowNumber(tRingkasan);
+            }
+
+            if ($('#tbl-detail').length) {
+                const tDetail = $('#tbl-detail').DataTable({
+                    responsive: true,
+                    dom:
+                        "<'row g-2 mb-3'<'col-auto'l><'col'f>>" +
+                        "<'row'<'col-sm-12'tr>>" +
+                        "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
+                    order: [[5, 'desc']],
+                    pageLength: 25,
+                    lengthMenu: [10, 25, 50, 100],
+                    language: dtLang,
+                    columnDefs: [
+                        { targets: 0, orderable: false, searchable: false },
+                        { targets: 10, orderable: false, searchable: false }
+                    ]
+                });
+                addRowNumber(tDetail);
+            }
+
+            // ================== Modal AJAX ==================
+            const $modal = $('#ajax-modal'),
+                  $body  = $modal.find('.modal-body'),
+                  $title = $modal.find('.modal-title');
+
+            function resetModalBody() {
+                $body.removeClass().addClass('modal-body');
+            }
+
+            $('#btn-create-modal').on('click', () => {
+                resetModalBody();
+                $title.text('Input Data Dinas');
+                $body.load('@Url.Action("Create", "Dinas")?employeeId=@qsEmployeeId', () => $modal.modal('show'));
+            });
+
+            $('body').on('click', '.btn-edit-modal', function () {
+                const id = $(this).data('id');
+                resetModalBody();
+                $title.text('Edit Data Dinas');
+                $body.load('@Url.Action("Edit", "Dinas")/' + id, () => $modal.modal('show'));
+            });
+
+            $('body').on('click', '.btn-info-modal', function () {
+                const id = $(this).data('id');
+                resetModalBody();
+                $title.text('Detail Data Dinas');
+                $body.load('@Url.Action("Details", "Dinas")/' + id, () => $modal.modal('show'));
+            });
+
+            $('#btn-import-modal').on('click', function () {
+                resetModalBody();
+                $title.text('Import Data Dinas');
+                $body.load('@Url.Action("ImportDialog", "Dinas")', () => $modal.modal('show'));
+            });
+
+            // ================== Hapus ==================
+            $('body').on('click', '.btn-delete', function () {
+                const id = $(this).data('id');
+                const token = $('#token-form').find('input[name="__RequestVerificationToken"]').val();
+
+                Swal.fire({
+                    title: 'Anda yakin?',
+                    text: 'Data dinas ini akan dihapus permanen.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, hapus',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#6c757d'
+                }).then(res => {
+                    if (!res.isConfirmed) return;
+
+                    $.post('@Url.Action("Delete", "Dinas")/' + id,
+                        { __RequestVerificationToken: token, id: id },
+                        function (r) {
+                            if (r.success) {
+                                Swal.fire('Berhasil', r.message, 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire('Gagal', r.message, 'error');
+                            }
+                        });
+                });
+            });
+
+            // ================== Handler submit universal (#ajax-form) ==================
+            $('body').on('submit', '#ajax-form', function (e) {
+                e.preventDefault();
+                const $f = $(this);
+
+                if ($f.valid && !$f.valid()) return;
+
+                const isMultipart = ($f.attr('enctype') || '').toLowerCase() === 'multipart/form-data';
+                const data = isMultipart ? new FormData(this) : $f.serialize();
+
+                let importTimer = null;
+                if (isMultipart && window.showLoader) {
+                    importTimer = setTimeout(() => window.showLoader(0), 800);
+                }
+
+                $.ajax({
+                    url: $f.attr('action'),
+                    type: 'POST',
+                    data: data,
+                    processData: !isMultipart,
+                    contentType: isMultipart ? false : 'application/x-www-form-urlencoded; charset=UTF-8',
+                    success: function (r) {
+                        if (importTimer) clearTimeout(importTimer);
+                        if (window.hideLoader) window.hideLoader();
+
+                        if (r.success) {
+                            $modal.modal('hide');
+                            Swal.fire('Berhasil', r.message, 'success')
+                                .then(() => location.reload());
+                        } else {
+                            let html = r.message || 'Gagal';
+                            if (r.errors && r.errors.length) {
+                                html += "<ul class='text-start mt-2 mb-0'>";
+                                r.errors.forEach(x => html += `<li>${x}</li>`);
+                                html += "</ul>";
+                            }
+                            Swal.fire({ title: 'Gagal', html: html, icon: 'error' });
+                        }
+                    },
+                    error: function () {
+                        if (importTimer) clearTimeout(importTimer);
+                        if (window.hideLoader) window.hideLoader();
+                        Swal.fire('Error', 'Terjadi kesalahan server. Silakan hubungi administrator.', 'error');
+                    }
+                });
+            });
+        });
+    </script>
+}

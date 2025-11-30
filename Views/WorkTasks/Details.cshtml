@@ -1,0 +1,42 @@
+﻿@model UtilitiesHR.Models.WorkTask
+@{
+    Layout = null;
+}
+
+<div class="card card-body shadow-sm border-0">
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Nama Pekerjaan</dt>
+        <dd class="col-sm-9">@Model.NamaPekerjaan</dd>
+
+        <dt class="col-sm-3">Request</dt>
+        <dd class="col-sm-9">@Model.NamaRequest</dd>
+
+        <dt class="col-sm-3">Tanggal</dt>
+        <dd class="col-sm-9">
+            @Model.StartDate?.ToString("dd/MM/yyyy")
+            –
+            @Model.DueDate?.ToString("dd/MM/yyyy")
+        </dd>
+
+        <dt class="col-sm-3">Progres</dt>
+        <dd class="col-sm-9">@Model.ProgressPercent % (@Model.Status)</dd>
+
+        <dt class="col-sm-3">Prioritas</dt>
+        <dd class="col-sm-9">@Model.Prioritas</dd>
+
+        <dt class="col-sm-3">PIC</dt>
+        <dd class="col-sm-9">@Model.NamaPIC</dd>
+
+        <dt class="col-sm-3">Keterangan</dt>
+        <dd class="col-sm-9">
+            @if (string.IsNullOrWhiteSpace(Model.KeteranganTindakLanjut))
+            {
+                @:-
+            }
+            else
+            {
+                @Model.KeteranganTindakLanjut
+            }
+        </dd>
+    </dl>
+</div>

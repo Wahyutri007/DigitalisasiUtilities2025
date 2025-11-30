@@ -1,0 +1,603 @@
+﻿@model UtilitiesHR.ViewModels.EmployeeDetailVm
+
+@{
+    ViewData["Title"] = "Detail Pekerja";
+    ViewData["Breadcrumb"] = "Detail Pekerja";
+
+    var e = Model.Employee;
+
+    // ====== HITUNG CUTI: LIMIT, TERPAKAI, SISA ======
+    var cutiLimit = e?.CutiLimit ?? 0;
+    var cutiDipakai = Model.TotalCuti; // di-anggap: jumlah cuti terpakai (transaksi)
+    var cutiSisa = cutiLimit - cutiDipakai;
+    if (cutiSisa < 0) { cutiSisa = 0; }
+}
+
+<style>
+    /* ====== HEADER ACTIONS (Kembali / Edit Data – sama tema dengan halaman lain) ====== */
+    .feature-header-actions {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        flex-wrap: wrap;
+    }
+
+        .feature-header-actions .btn {
+            min-width: 40px;
+            border-radius: 999px;
+            padding-inline: 1.0rem;
+            font-size: .78rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .feature-header-actions .btn i {
+                font-size: .9rem;
+            }
+
+    .btn-pill-outline {
+        background: #ffffff;
+        border-radius: 999px;
+        border: 1px solid #d0d7e6;
+        color: #0f172a;
+    }
+
+        .btn-pill-outline i {
+            color: #0a5db0;
+        }
+
+        .btn-pill-outline:hover {
+            background: #f3f6fb;
+            border-color: #c3cce3;
+        }
+
+    .btn-pill-primary {
+        border-radius: 999px;
+        background: #0f7bd9;
+        border-color: #0f7bd9;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+    }
+
+        .btn-pill-primary:hover {
+            background: #0a5db0;
+            border-color: #0a5db0;
+        }
+
+        .btn-pill-primary i {
+            color: #ffffff;
+        }
+
+    @@media (max-width: 575.98px) {
+        .feature-header-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+            .feature-header-actions .btn span {
+                display: none !important; /* di HP hanya icon */
+            }
+
+            .feature-header-actions .btn {
+                padding-inline: .6rem;
+            }
+    }
+
+    /* ====== WRAPPER DETAIL ====== */
+    .emp-details-wrapper {
+        font-size: .9rem;
+    }
+
+    /* ====== STAT KARTU (Total Dinas / Cuti / Sertifikasi) ====== */
+    .emp-stat-row {
+        margin-bottom: 1.25rem;
+    }
+
+    .emp-stat-card {
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 32px rgba(15,23,42,.05);
+        padding: .9rem 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: .75rem;
+    }
+
+    .emp-stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        background: #eff6ff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: #1d4ed8;
+    }
+
+    .emp-stat-body {
+        display: flex;
+        flex-direction: column;
+        gap: .1rem;
+    }
+
+    .emp-stat-label {
+        font-size: .72rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: #6b7280;
+    }
+
+    .emp-stat-value {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .emp-stat-sub {
+        font-size: .75rem;
+        color: #6b7280;
+    }
+
+    /* ====== KARTU GRAFIK CUTI ====== */
+    .emp-chart-row {
+        margin-bottom: 1.25rem;
+    }
+
+    .emp-chart-card {
+        border-radius: 16px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 8px 24px rgba(15,23,42,.05);
+        padding: .9rem 1.1rem 1.1rem 1.1rem;
+    }
+
+    .emp-chart-title {
+        font-size: .8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .06em;
+        color: #6b7280;
+        margin-bottom: .4rem;
+    }
+
+    .emp-chart-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: .25rem;
+    }
+
+    .emp-chart-caption {
+        font-size: .75rem;
+        color: #6b7280;
+        margin-bottom: .4rem;
+    }
+
+    .emp-chart-wrapper {
+        display: flex;
+        align-items: center;
+        gap: .8rem;
+    }
+
+    .emp-chart-legend {
+        font-size: .75rem;
+        color: #4b5563;
+    }
+
+        .emp-chart-legend .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            margin-right: .35rem;
+        }
+
+    /* ====== KARTU UTAMA INFORMASI (Identitas, Keluarga, dst) ====== */
+    .emp-info-card {
+        border-radius: 16px;
+        border: 1px solid #e5e9f2;
+        background: #ffffff;
+        box-shadow: 0 6px 20px rgba(15,23,42,.04);
+        padding: 1.25rem 1.4rem;
+    }
+
+    .emp-info-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+        gap: 1.5rem 2rem;
+    }
+
+    @@media (max-width: 991.98px) {
+        .emp-info-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .emp-section-header {
+        display: flex;
+        align-items: center;
+        gap: .4rem;
+        margin-bottom: .6rem;
+        font-weight: 600;
+        font-size: .86rem;
+        color: #111827;
+    }
+
+        .emp-section-header i {
+            font-size: .95rem;
+            color: #2563eb;
+        }
+
+    .emp-info-card dl.row {
+        margin-bottom: .3rem;
+    }
+
+    .emp-info-card dt {
+        font-size: .78rem;
+        color: #6b7280;
+        font-weight: 600;
+    }
+
+    .emp-info-card dd {
+        font-size: .88rem;
+        color: #111827;
+    }
+
+    .emp-info-divider {
+        border-top: 1px dashed #e5e9f2;
+        margin: .75rem 0 .9rem;
+    }
+</style>
+
+@* ====== TOMBOL AKSI DI KANAN BREADCRUMB ====== *@
+@section PageActions {
+    <div class="feature-header-actions">
+        <a asp-action="Index"
+           class="btn btn-pill-outline"
+           title="Kembali ke Data Pekerja">
+            <i class="bi bi-arrow-left me-1"></i>
+            <span class="d-none d-md-inline">Kembali</span>
+        </a>
+
+        <button type="button"
+                id="btn-edit"
+                class="btn btn-pill-primary"
+                title="Edit Data Pekerja">
+            <i class="bi bi-pencil-square me-1"></i>
+            <span class="d-none d-md-inline">Edit Data</span>
+        </button>
+    </div>
+}
+
+<div class="emp-details-wrapper">
+
+    <!-- STAT KARTU: DINAS / CUTI / SERTIFIKASI -->
+    <div class="row g-3 mb-3 emp-stat-row">
+        <div class="col-xl-4 col-md-4 col-12">
+            <div class="emp-stat-card">
+                <div class="emp-stat-icon">
+                    <i class="bi bi-airplane"></i>
+                </div>
+                <div class="emp-stat-body">
+                    <span class="emp-stat-label">Total Dinas</span>
+                    <span class="emp-stat-value">@Model.TotalDinas</span>
+                    <span class="emp-stat-sub text-muted">Jumlah perjalanan dinas</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-4 col-12">
+            <div class="emp-stat-card">
+                <div class="emp-stat-icon">
+                    <i class="bi bi-calendar-check"></i>
+                </div>
+                <div class="emp-stat-body">
+                    <span class="emp-stat-label">Sisa Cuti</span>
+                    <span class="emp-stat-value">@cutiSisa</span>
+                    <span class="emp-stat-sub text-muted">
+                        Limit: @cutiLimit, Terpakai: @cutiDipakai
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-4 col-12">
+            <div class="emp-stat-card">
+                <div class="emp-stat-icon">
+                    <i class="bi bi-award"></i>
+                </div>
+                <div class="emp-stat-body">
+                    <span class="emp-stat-label">Total Sertifikasi</span>
+                    <span class="emp-stat-value">@Model.TotalSertifikasi</span>
+                    <span class="emp-stat-sub text-muted">Jumlah sertifikasi aktif/nonaktif</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRAFIK CUTI: JUMLAH & SISA (2 GRAFIK) -->
+    <div class="row g-3 mb-3 emp-chart-row">
+        <div class="col-md-6 col-12">
+            <div class="emp-chart-card">
+                <div class="emp-chart-title">Jumlah Cuti Terpakai</div>
+                <div class="emp-chart-value">@cutiDipakai</div>
+                <div class="emp-chart-caption">Dalam satuan hari / transaksi sesuai konfigurasi cuti.</div>
+
+                <div class="emp-chart-wrapper">
+                    <div style="width: 80px; height: 80px;">
+                        <canvas id="chartCutiDipakai"></canvas>
+                    </div>
+                    <div class="emp-chart-legend">
+                        <div class="mb-1">
+                            <span class="dot" style="background:#0f7bd9;"></span>
+                            <span>Cuti terpakai (@cutiDipakai)</span>
+                        </div>
+                        <div>
+                            <span class="dot" style="background:#e5e7eb;"></span>
+                            <span>Sisa limit (@cutiSisa)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-12">
+            <div class="emp-chart-card">
+                <div class="emp-chart-title">Sisa Cuti</div>
+                <div class="emp-chart-value">@cutiSisa</div>
+                <div class="emp-chart-caption">Perbandingan sisa cuti terhadap limit tahunan.</div>
+
+                <div class="emp-chart-wrapper">
+                    <div style="width: 80px; height: 80px;">
+                        <canvas id="chartCutiSisa"></canvas>
+                    </div>
+                    <div class="emp-chart-legend">
+                        <div class="mb-1">
+                            <span class="dot" style="background:#22c55e;"></span>
+                            <span>Sisa cuti (@cutiSisa)</span>
+                        </div>
+                        <div>
+                            <span class="dot" style="background:#e5e7eb;"></span>
+                            <span>Cuti terpakai (@cutiDipakai)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KARTU UTAMA INFORMASI PEKERJA -->
+    <div class="emp-info-card">
+        <div class="emp-info-grid">
+            <!-- KOLOM KIRI -->
+            <div>
+                <div class="emp-section-header">
+                    <i class="bi bi-person-badge"></i>
+                    <span>Identitas Pekerja</span>
+                </div>
+                <dl class="row">
+                    <dt class="col-sm-4">Nama Lengkap</dt>
+                    <dd class="col-sm-8">@e.NamaLengkap</dd>
+
+                    <dt class="col-sm-4">Nopeg Persero</dt>
+                    <dd class="col-sm-8">@e.NopegPersero</dd>
+
+                    <dt class="col-sm-4">Nopeg KPI</dt>
+                    <dd class="col-sm-8">@e.NopegKPI</dd>
+
+                    <dt class="col-sm-4">Jabatan</dt>
+                    <dd class="col-sm-8">@e.Jabatan</dd>
+
+                    <dt class="col-sm-4">Jenis Kelamin</dt>
+                    <dd class="col-sm-8">@e.JenisKelamin</dd>
+
+                    <dt class="col-sm-4">Tempat / Tgl Lahir</dt>
+                    <dd class="col-sm-8">
+                        @e.TempatLahir
+                        @if (e.TanggalLahir.HasValue)
+                        {
+                            <span>, @e.TanggalLahir.Value.ToString("dd-MM-yyyy")</span>
+                        }
+                        @if (e.Usia > 0)
+                        {
+                            <span class="text-muted small"> (@e.Usia th)</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Alamat Domisili</dt>
+                    <dd class="col-sm-8">@e.AlamatDomisili</dd>
+                </dl>
+
+                <div class="emp-info-divider"></div>
+
+                <div class="emp-section-header mt-1">
+                    <i class="bi bi-people"></i>
+                    <span>Data Keluarga</span>
+                </div>
+                <dl class="row">
+                    <dt class="col-sm-4">Status Pernikahan</dt>
+                    <dd class="col-sm-8">@e.StatusPernikahan</dd>
+
+                    <dt class="col-sm-4">Nama Suami/Istri</dt>
+                    <dd class="col-sm-8">@e.NamaSuamiIstri</dd>
+
+                    <dt class="col-sm-4">Jumlah Anak</dt>
+                    <dd class="col-sm-8">@e.JumlahAnak</dd>
+                </dl>
+            </div>
+
+            <!-- KOLOM KANAN -->
+            <div>
+                <div class="emp-section-header">
+                    <i class="bi bi-building-gear"></i>
+                    <span>Kepegawaian</span>
+                </div>
+                <dl class="row">
+                    <dt class="col-sm-4">Tanggal MPPK</dt>
+                    <dd class="col-sm-8">@e.TanggalMPPK?.ToString("dd-MM-yyyy")</dd>
+
+                    <dt class="col-sm-4">Tanggal Pensiun</dt>
+                    <dd class="col-sm-8">@e.TanggalPensiun?.ToString("dd-MM-yyyy")</dd>
+
+                    <dt class="col-sm-4">Intake Pertama</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrWhiteSpace(e.IntakePertama))
+                        {
+                            @e.IntakePertama
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Intake Aktif</dt>
+                    <dd class="col-sm-8">
+                        @e.IntakeAktif?.ToString("dd-MM-yyyy")
+                        @if (e.MasaKerjaTahun > 0)
+                        {
+                            <span class="text-muted small"> (@e.MasaKerjaTahun th)</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Clustering Intake</dt>
+                    <dd class="col-sm-8">@e.ClusteringIntake</dd>
+
+                    <dt class="col-sm-4">Limit Cuti</dt>
+                    <dd class="col-sm-8">@cutiLimit</dd>
+                </dl>
+
+                <div class="emp-info-divider"></div>
+
+                <div class="emp-section-header mt-1">
+                    <i class="bi bi-mortarboard"></i>
+                    <span>Pendidikan &amp; Ukuran</span>
+                </div>
+                <dl class="row">
+                    <dt class="col-sm-4">Pendidikan Terakhir</dt>
+                    <dd class="col-sm-8">@e.PendidikanTerakhir</dd>
+
+                    <dt class="col-sm-4">Jurusan</dt>
+                    <dd class="col-sm-8">@e.Jurusan</dd>
+
+                    <dt class="col-sm-4">Institusi</dt>
+                    <dd class="col-sm-8">@e.Institusi</dd>
+
+                    <dt class="col-sm-4">Uk Wearpack</dt>
+                    <dd class="col-sm-8">@e.UkWearpack</dd>
+
+                    <dt class="col-sm-4">Uk Kemeja Putih</dt>
+                    <dd class="col-sm-8">@e.UkKemejaPutih</dd>
+
+                    <dt class="col-sm-4">Uk Kemeja Produk</dt>
+                    <dd class="col-sm-8">@e.UkKemejaProduk</dd>
+
+                    <dt class="col-sm-4">Uk Sepatu Safety</dt>
+                    <dd class="col-sm-8">@e.UkSepatuSafety</dd>
+                </dl>
+
+                <div class="emp-info-divider"></div>
+
+                <div class="emp-section-header mt-1">
+                    <i class="bi bi-telephone"></i>
+                    <span>Kontak</span>
+                </div>
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Email Pertamina</dt>
+                    <dd class="col-sm-8">@e.EmailPertamina</dd>
+
+                    <dt class="col-sm-4">Nomor HP</dt>
+                    <dd class="col-sm-8">@e.NomorHP</dd>
+
+                    <dt class="col-sm-4">Telepon Rumah</dt>
+                    <dd class="col-sm-8">@e.NomorTeleponRumah</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Chart.js untuk grafik cuti -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        $(function () {
+            // ====== OPEN MODAL EDIT ======
+            $('#btn-edit').on('click', function () {
+                var id = @e.Id;
+                $.get('@Url.Action("Edit", "Employees")', { id: id }, function (html) {
+                    $('#ajax-modal .modal-title').text('Edit Data Pekerja');
+                    $('#ajax-modal .modal-body').html(html);
+                    bootstrap.Modal.getOrCreateInstance('#ajax-modal').show();
+                });
+            });
+
+            // ====== DATA CUTI (dari server) ======
+            const cutiLimit = @cutiLimit;
+            const cutiDipakai = @cutiDipakai;
+            const cutiSisa = @cutiSisa;
+
+            // Proteksi kalau limit 0 supaya grafik tetap kelihatan
+            const totalForChart = Math.max(cutiLimit, cutiDipakai + cutiSisa, 1);
+
+            // ====== GRAFIK 1: JUMLAH CUTI TERPAKAI ======
+            const ctxDipakai = document.getElementById('chartCutiDipakai');
+            if (ctxDipakai) {
+                new Chart(ctxDipakai, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Terpakai', 'Sisa'],
+                        datasets: [{
+                            data: [cutiDipakai, cutiSisa],
+                            backgroundColor: ['#0f7bd9', '#e5e7eb'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        cutout: '70%',
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (ctx) {
+                                        return ctx.label + ': ' + ctx.parsed + ' hari';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // ====== GRAFIK 2: SISA CUTI ======
+            const ctxSisa = document.getElementById('chartCutiSisa');
+            if (ctxSisa) {
+                new Chart(ctxSisa, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Sisa', 'Terpakai'],
+                        datasets: [{
+                            data: [cutiSisa, cutiDipakai],
+                            backgroundColor: ['#22c55e', '#e5e7eb'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        cutout: '70%',
+                        responsive: true,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (ctx) {
+                                        return ctx.label + ': ' + ctx.parsed + ' hari';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

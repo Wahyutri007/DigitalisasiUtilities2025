@@ -1,0 +1,569 @@
+﻿@model UtilitiesHR.Models.Employee
+@{
+    Layout = null;
+
+    var jabatanList = ViewBag.JabatanList as List<string> ?? new();
+    var pendidikanList = ViewBag.PendidikanList as List<string> ?? new();
+    var jurusanList = ViewBag.JurusanList as List<string> ?? new();
+    var institusiList = ViewBag.InstitusiList as List<string> ?? new();
+    var statusList = ViewBag.StatusNikahList as List<string> ?? new();
+
+    var ukWearpackList = ViewBag.UkWearpackList as List<string> ?? new();
+    var ukKemejaPutihList = ViewBag.UkKemejaPutihList as List<string> ?? new();
+    var ukKemejaProdukList = ViewBag.UkKemejaProdukList as List<string> ?? new();
+    var ukSepatuSafetyList = ViewBag.UkSepatuSafetyList as List<string> ?? new();
+
+    bool isEdit = Model.Id > 0;
+    string actionName = isEdit ? "Edit" : "Create";
+    string successDefault = isEdit
+        ? "Data pekerja berhasil diperbarui."
+        : "Data pekerja berhasil disimpan.";
+}
+
+<div class="employee-form">
+    <style>
+        .employee-form {
+            font-size: .9rem;
+        }
+
+            .employee-form .wizard-nav {
+                border-bottom: 1px solid #e5e9f2;
+                margin-bottom: 1rem;
+            }
+
+                .employee-form .wizard-nav .nav-link {
+                    border: none;
+                    border-bottom: 2px solid transparent;
+                    padding: .35rem .7rem;
+                    font-size: .78rem;
+                    text-transform: uppercase;
+                    letter-spacing: .06em;
+                    color: #6b7280;
+                }
+
+                    .employee-form .wizard-nav .nav-link.active {
+                        color: #2563eb;
+                        border-bottom-color: #2563eb;
+                        font-weight: 600;
+                    }
+
+            .employee-form .section-label {
+                font-size: .78rem;
+                text-transform: uppercase;
+                letter-spacing: .08em;
+                color: #9ca3af;
+                margin-bottom: .25rem;
+            }
+
+            .employee-form .form-label {
+                font-size: .82rem;
+                font-weight: 600;
+            }
+
+        /* ===== STACK MODAL: container yang di-scroll ===== */
+        .emp-modal-stack {
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* isi form saja, tidak di-scroll lagi */
+        .emp-modal-scroll {
+            flex: 1 0 auto;
+            padding-right: 4px;
+            padding-bottom: 0.75rem;
+        }
+
+        .emp-modal-actions {
+            position: sticky;
+            bottom: 0;
+            background: #fff;
+            border-top: 1px solid #e5e9f2;
+            padding-top: 0.75rem;
+            padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 0.25rem);
+            margin-top: 0.5rem;
+            z-index: 1;
+        }
+
+            .emp-modal-actions .btn {
+                min-width: 90px;
+            }
+
+        @@media (max-width: 575.98px) {
+            .emp-modal-stack {
+                max-height: calc(100vh - 110px);
+            }
+
+            .emp-modal-actions {
+                gap: .5rem;
+            }
+
+                .emp-modal-actions .btn {
+                    width: 100%;
+                }
+
+                .emp-modal-actions .emp-actions-left,
+                .emp-modal-actions .emp-actions-right {
+                    width: 100%;
+                }
+        }
+    </style>
+
+    <div class="emp-modal-stack">
+        <form id="ajax-form"
+              asp-action="@actionName"
+              asp-controller="Employees"
+              asp-route-id="@(isEdit ? Model.Id : 0)"
+              method="post">
+
+            @Html.AntiForgeryToken()
+            @if (isEdit)
+            {
+                <input type="hidden" asp-for="Id" />
+            }
+
+            <div class="emp-modal-scroll">
+                <!-- NAV STEP -->
+                <ul class="nav wizard-nav" id="emp-steps">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-step="1" type="button">1. Identitas</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-step="2" type="button">2. Keluarga</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-step="3" type="button">3. Kepegawaian</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-step="4" type="button">4. Pendidikan &amp; Ukuran</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-step="5" type="button">5. Kontak</button>
+                    </li>
+                </ul>
+
+                <!-- STEP 1 -->
+                <div class="emp-step" data-step="1">
+                    <div class="section-label">Identitas Pekerja</div>
+                    <div class="row g-3">
+                        <div class="col-md-4 col-12">
+                            <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
+                            <input asp-for="NamaLengkap" class="form-control form-control-sm" />
+                            <span asp-validation-for="NamaLengkap" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <label class="form-label">Nopeg Persero <span class="text-danger">*</span></label>
+                            <input asp-for="NopegPersero" class="form-control form-control-sm" />
+                            <span asp-validation-for="NopegPersero" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <label class="form-label">Nopeg KPI</label>
+                            <input asp-for="NopegKPI" class="form-control form-control-sm" />
+                        </div>
+
+                        <div class="col-md-4 col-12">
+                            <label class="form-label">Jenis Kelamin</label>
+                            <select asp-for="JenisKelamin" class="form-select form-select-sm">
+                                <option value="">- pilih -</option>
+                                <option value="L">L</option>
+                                <option value="P">P</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-8 col-12">
+                            <label class="form-label">Jabatan</label>
+                            <select asp-for="Jabatan" class="form-select form-select-sm select2-tags">
+                                <option value="">- pilih / ketik -</option>
+                                @foreach (var j in jabatanList)
+                                {
+                                    <option value="@j">@j</option>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.Jabatan) && !jabatanList.Contains(Model.Jabatan))
+                                {
+                                    <option value="@Model.Jabatan">@Model.Jabatan</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 col-12">
+                            <label class="form-label">Tempat Lahir</label>
+                            <input asp-for="TempatLahir" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label">Tanggal Lahir</label>
+                            <input asp-for="TanggalLahir" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label">Usia (th)</label>
+                            <input value="@Model.Usia" class="form-control form-control-sm" disabled />
+                        </div>
+
+                        <div class="col-12 mb-2">
+                            <label class="form-label">Alamat Domisili</label>
+                            <textarea asp-for="AlamatDomisili" rows="2" class="form-control form-control-sm"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2 -->
+                <div class="emp-step d-none" data-step="2">
+                    <div class="section-label">Data Keluarga</div>
+                    <div class="row g-3">
+                        <div class="col-md-4 col-12">
+                            <label class="form-label">Status Pernikahan</label>
+                            <select asp-for="StatusPernikahan" class="form-select form-select-sm select2-tags" id="StatusPernikahan">
+                                <option value="">- pilih / ketik -</option>
+                                @foreach (var s in statusList)
+                                {
+                                    <option value="@s">@s</option>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.StatusPernikahan) && !statusList.Contains(Model.StatusPernikahan))
+                                {
+                                    <option value="@Model.StatusPernikahan">@Model.StatusPernikahan</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-5 col-12 family-fields">
+                            <label class="form-label">Nama Suami/Istri</label>
+                            <input asp-for="NamaSuamiIstri" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3 col-6 family-fields">
+                            <label class="form-label">Jumlah Anak</label>
+                            <input asp-for="JumlahAnak" type="number" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3 -->
+                <div class="emp-step d-none" data-step="3">
+                    <div class="section-label">Kepegawaian</div>
+                    <div class="row g-3">
+                        <div class="col-md-3 col-6">
+                            <label class="form-label">Tanggal MPPK</label>
+                            <input asp-for="TanggalMPPK" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label">Tanggal Pensiun</label>
+                            <input asp-for="TanggalPensiun" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label">Intake Pertama</label>
+                            <input asp-for="IntakePertama"  class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label">Intake Aktif</label>
+                            <input asp-for="IntakeAktif" type="date" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <label class="form-label">Clustering Intake</label>
+                            <input asp-for="ClusteringIntake" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-2 col-6">
+                            <label class="form-label">Masa Kerja (th)</label>
+                            <input value="@Model.MasaKerjaTahun" class="form-control form-control-sm" disabled />
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label">Limit Cuti (hari)</label>
+                            <input asp-for="CutiLimit" type="number" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 4 -->
+                <div class="emp-step d-none" data-step="4">
+                    <div class="section-label">Pendidikan &amp; Ukuran</div>
+                    <div class="row g-3">
+                        <div class="col-md-4 col-12">
+                            <label class="form-label">Pendidikan Terakhir</label>
+                            <select asp-for="PendidikanTerakhir" class="form-select form-select-sm select2-tags">
+                                <option value="">- pilih / ketik -</option>
+                                @foreach (var p in pendidikanList)
+                                {
+                                    <option value="@p">@p</option>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.PendidikanTerakhir) && !pendidikanList.Contains(Model.PendidikanTerakhir))
+                                {
+                                    <option value="@Model.PendidikanTerakhir">@Model.PendidikanTerakhir</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <label class="form-label">Jurusan</label>
+                            <select asp-for="Jurusan" class="form-select form-select-sm select2-tags">
+                                <option value="">- pilih / ketik -</option>
+                                @foreach (var j in jurusanList)
+                                {
+                                    <option value="@j">@j</option>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.Jurusan) && !jurusanList.Contains(Model.Jurusan))
+                                {
+                                    <option value="@Model.Jurusan">@Model.Jurusan</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <label class="form-label">Institusi</label>
+                            <select asp-for="Institusi" class="form-select form-select-sm select2-tags">
+                                <option value="">- pilih / ketik -</option>
+                                @foreach (var i in institusiList)
+                                {
+                                    <option value="@i">@i</option>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.Institusi) && !institusiList.Contains(Model.Institusi))
+                                {
+                                    <option value="@Model.Institusi">@Model.Institusi</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-12"></div>
+
+                        <div class="col-md-3 col-6">
+                            <label class="form-label">Uk Wearpack</label>
+                            <select asp-for="UkWearpack" class="form-select form-select-sm select2-tags">
+                                <option value="">- pilih / ketik -</option>
+                                @foreach (var v in ukWearpackList)
+                                {
+                                    <option value="@v">@v</option>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.UkWearpack) && !ukWearpackList.Contains(Model.UkWearpack))
+                                {
+                                    <option value="@Model.UkWearpack">@Model.UkWearpack</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 col-6">
+                            <label class="form-label">Uk Kemeja Putih</label>
+                            <select asp-for="UkKemejaPutih" class="form-select form-select-sm select2-tags">
+                                <option value="">- pilih / ketik -</option>
+                                @foreach (var v in ukKemejaPutihList)
+                                {
+                                    <option value="@v">@v</option>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.UkKemejaPutih) && !ukKemejaPutihList.Contains(Model.UkKemejaPutih))
+                                {
+                                    <option value="@Model.UkKemejaPutih">@Model.UkKemejaPutih</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 col-6">
+                            <label class="form-label">Uk Kemeja Produk</label>
+                            <select asp-for="UkKemejaProduk" class="form-select form-select-sm select2-tags">
+                                <option value="">- pilih / ketik -</option>
+                                @foreach (var v in ukKemejaProdukList)
+                                {
+                                    <option value="@v">@v</option>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.UkKemejaProduk) && !ukKemejaProdukList.Contains(Model.UkKemejaProduk))
+                                {
+                                    <option value="@Model.UkKemejaProduk">@Model.UkKemejaProduk</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 col-6 mb-2">
+                            <label class="form-label">Uk Sepatu Safety</label>
+                            <select asp-for="UkSepatuSafety" class="form-select form-select-sm select2-tags">
+                                <option value="">- pilih / ketik -</option>
+                                @foreach (var v in ukSepatuSafetyList)
+                                {
+                                    <option value="@v">@v</option>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Model.UkSepatuSafety) && !ukSepatuSafetyList.Contains(Model.UkSepatuSafety))
+                                {
+                                    <option value="@Model.UkSepatuSafety">@Model.UkSepatuSafety</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 5 -->
+                <div class="emp-step d-none" data-step="5">
+                    <div class="section-label">Kontak</div>
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-6 col-12">
+                            <label class="form-label">Email Pertamina</label>
+                            <input asp-for="EmailPertamina" class="form-control form-control-sm" />
+                            <span asp-validation-for="EmailPertamina" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-3 col-12">
+                            <label class="form-label">Nomor HP</label>
+                            <input asp-for="NomorHP" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3 col-12">
+                            <label class="form-label">Telepon Rumah</label>
+                            <input asp-for="NomorTeleponRumah" class="form-control form-control-sm" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOOTER STICKY -->
+            <div class="emp-modal-actions d-flex justify-content-between align-items-center gap-2">
+                <div class="emp-actions-left d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-prev">
+                        &lt; Sebelumnya
+                    </button>
+                </div>
+                <div class="emp-actions-right d-flex gap-2">
+                    <button type="button" class="btn btn-primary btn-sm btn-next">
+                        Selanjutnya &gt;
+                    </button>
+                    <button type="submit" class="btn btn-success btn-sm btn-submit d-none">
+                        <i class="bi bi-check-lg"></i> @(isEdit ? "Update" : "Simpan")
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const $form = $('#ajax-form');
+        const $steps = $('.emp-step');
+        const $tabs = $('#emp-steps .nav-link');
+        let current = 1;
+
+        // Aktifkan unobtrusive validation ulang untuk form di modal
+        if ($.validator && $.validator.unobtrusive) {
+            $.validator.unobtrusive.parse($form);
+        }
+
+        function showStep(step) {
+            current = step;
+            $steps.addClass('d-none');
+            $steps.filter('[data-step="' + step + '"]').removeClass('d-none');
+
+            $tabs.removeClass('active');
+            $tabs.filter('[data-step="' + step + '"]').addClass('active');
+
+            $('.btn-prev').prop('disabled', step === 1);
+            $('.btn-next').toggleClass('d-none', step === 5);
+            $('.btn-submit').toggleClass('d-none', step !== 5);
+        }
+
+        $tabs.on('click', function () {
+            const step = parseInt($(this).data('step'));
+            showStep(step);
+        });
+
+        $('.btn-prev').on('click', function () {
+            if (current > 1) showStep(current - 1);
+        });
+
+        $('.btn-next').on('click', function () {
+            if (current < 5) showStep(current + 1);
+        });
+
+        showStep(1);
+
+        // ================== Select2 ==================
+        const $modal = $('#ajax-modal');
+        $form.find('.select2-tags').each(function () {
+            $(this).select2({
+                tags: true,
+                theme: 'bootstrap-5',
+                width: '100%',
+                dropdownParent: $modal
+            });
+        });
+
+        // ================== TOGGLE FIELD KELUARGA ==================
+        const $status = $('#StatusPernikahan');
+        const $familyFields = $form.find('.family-fields');
+
+        function normalize(val) {
+            return (val || '').toString().trim().toLowerCase();
+        }
+
+        function isBelumMenikah(val) {
+            const v = normalize(val);
+            return v === 'belum menikah' || v === 'single' || v === 'lajang';
+        }
+
+        function updateFamilyFields() {
+            const val = $status.val();
+            if (isBelumMenikah(val)) {
+                $familyFields.addClass('d-none');
+                $form.find('[name="NamaSuamiIstri"]').val('');
+                $form.find('[name="JumlahAnak"]').val('');
+            } else {
+                $familyFields.removeClass('d-none');
+            }
+        }
+
+        $status.on('change', updateFamilyFields);
+        updateFamilyFields();
+
+        // ================== Submit AJAX (SweetAlert seragam) ==================
+        $form.on('submit', function (e) {
+            e.preventDefault();
+            const $f = $(this);
+
+            // Validasi client-side dulu kalau ada
+            if ($f.valid && !$f.valid()) {
+                return;
+            }
+
+            $.ajax({
+                url: $f.attr('action'),
+                type: 'POST',
+                data: $f.serialize()
+            }).done(function (resp) {
+                if (resp && resp.success) {
+                    Swal.fire(
+                        'Berhasil',
+                        resp.message || '@successDefault',
+                        'success'
+                    ).then(function () {
+                        const m = bootstrap.Modal.getOrCreateInstance('#ajax-modal');
+                        m.hide();
+
+                        // === PERBAIKAN: jika datang dari Home?firstEditId=xx,
+                        // hapus query firstEditId dan buka Home tanpa popup lagi ===
+                        try {
+                            const url = new URL(window.location.href);
+                            if (url.searchParams.has('firstEditId')) {
+                                url.searchParams.delete('firstEditId');
+                                const cleanPath = url.pathname + (url.search ? url.search : '');
+                                window.location.href = cleanPath || '/';
+                            } else {
+                                // kalau edit dari halaman lain (misal /Employees),
+                                // cukup reload supaya tabel ikut update
+                                location.reload();
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            location.reload();
+                        }
+                    });
+                } else {
+                    let msg = (resp && resp.message)
+                        ? resp.message
+                        : 'Gagal menyimpan data pekerja.';
+                    if (resp && resp.errors && resp.errors.length) {
+                        msg += "<ul class='text-start mt-2'>";
+                        resp.errors.forEach(e => msg += `<li>${e}</li>`);
+                        msg += "</ul>";
+                        Swal.fire({ title: 'Gagal', html: msg, icon: 'error' });
+                    } else {
+                        Swal.fire('Gagal', msg, 'error');
+                    }
+                }
+            }).fail(function () {
+                Swal.fire(
+                    'Gagal',
+                    'Gagal menyimpan data pekerja (server error).',
+                    'error'
+                );
+            });
+        });
+    })();
+</script>

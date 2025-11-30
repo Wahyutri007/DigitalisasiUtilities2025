@@ -1,0 +1,927 @@
+﻿@{
+    Layout = null;
+    ViewData["Title"] = "Login";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+
+    // Hanya tampilkan error saat POST (setelah user submit)
+    var isPost = string.Equals(Context.Request.Method, "POST", System.StringComparison.OrdinalIgnoreCase);
+    var hasModelError = isPost && !ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0;
+
+    // Optional: kalau kamu pakai TempData["ErrorMessage"] di controller
+    var errorMessage = TempData["ErrorMessage"] as string;
+
+    // 👉 Pesan informasi password terakhir diubah (diisi dari TempData["PasswordInfo"])
+    var passwordInfo = TempData["PasswordInfo"] as string;
+}
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Utilities HR</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ==================== THEME TOKENS ==================== */
+        :root {
+            --brand-red: #e31e24;
+            --brand-blue: #0f7bd9;
+            --primary: var(--brand-blue);
+            --danger: var(--brand-red);
+            --ink: #0f172a;
+            --muted: #667085;
+            --line: #e5e9f2;
+            --bg: #ffffff;
+            --soft: #f6f8fb;
+            --primary-soft: #eaf3ff;
+            --radius-lg: 12px;
+            --radius-md: 8px;
+            --radius-sm: 6px;
+            --shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+            --shadow-hover: 0 12px 40px rgba(15, 23, 42, 0.12);
+            /* Typography */
+            --fs-base: 14px;
+            --fs-sm: 13px;
+            --fs-xs: 12px;
+            --h1: 22px;
+            --h2: 20px;
+            --h3: 18px;
+            --h4: 16px;
+            --h5: 14px;
+            --h6: 13px;
+        }
+
+        body {
+            font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+            font-size: var(--fs-base);
+            line-height: 1.5;
+            color: var(--ink);
+            background: #f8fafc;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* ==================== LOGIN WRAPPER ==================== */
+        .login-page-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .login-wrapper {
+            max-width: 100%;
+            width: 100%;
+            margin: 0;
+            background: var(--bg);
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: none;
+            border: none;
+            animation: slideUpFade 0.6s ease-out;
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+        }
+
+        @@keyframes slideUpFade {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ==================== IMAGE SECTION ==================== */
+        .login-image {
+            background-image: linear-gradient(135deg, rgba(15, 123, 217, 0.6) 0%, rgba(30, 41, 59, 0.8) 100%), url('https://upload.wikimedia.org/wikipedia/commons/b/b1/Kilang_Minyak_Pertamina_RU_II_Dumai.jpg');
+            /* gradient penuh, gambar dipaksa ikut lebar & tinggi container */
+            background-size: cover, 100% 100%;
+            background-repeat: no-repeat, no-repeat;
+            background-position: center, center;
+            min-height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 1.5rem;
+            overflow: hidden;
+        }
+
+            .login-image::before {
+                content: '';
+                position: absolute;
+                top: -50%;
+                left: -50%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+                transform: rotate(45deg);
+                animation: shimmer 8s infinite linear;
+            }
+
+        @@keyframes shimmer {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        .image-content {
+            text-align: center;
+            color: white;
+            z-index: 2;
+            width: 100%;
+            position: relative;
+            max-width: 460px;
+        }
+
+        .pertamina-logo {
+            width: 80px;
+            margin-bottom: 1rem;
+            filter: brightness(0) invert(1);
+            transition: transform 0.3s ease;
+        }
+
+            .pertamina-logo:hover {
+                transform: scale(1.05);
+            }
+
+        .image-content h3 {
+            font-weight: 700;
+            margin-bottom: 0.9rem;
+            font-size: 26px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            letter-spacing: -0.5px;
+        }
+
+        .image-content p {
+            font-size: 15px;
+            opacity: 0.96;
+            line-height: 1.7;
+            margin-bottom: 1.3rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.7rem;
+        }
+
+            .feature-list li {
+                padding: 0.55rem 0.8rem;
+                color: rgba(255,255,255,0.96);
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                font-size: 13.5px;
+                text-align: left;
+                background: rgba(255,255,255,0.1);
+                border-radius: var(--radius-sm);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.25);
+                transition: all 0.3s ease;
+            }
+
+                .feature-list li:hover {
+                    background: rgba(255,255,255,0.18);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+
+                .feature-list li i {
+                    color: rgba(255,255,255,0.98);
+                    margin-right: 0.55rem;
+                    font-size: 1.05rem;
+                    width: 20px;
+                    text-align: center;
+                    transition: transform 0.3s ease;
+                }
+
+                .feature-list li:hover i {
+                    transform: scale(1.1);
+                }
+
+        /* ==================== FORM SECTION ==================== */
+        .login-form {
+            padding: 1.5rem 2.75rem;
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: stretch;
+            position: relative;
+        }
+
+            .login-form::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, var(--brand-blue), var(--brand-red));
+            }
+
+        .login-form-inner {
+            width: 100%;
+            max-width: 460px;
+            margin: 0 auto;
+        }
+
+        .form-header {
+            text-align: left;
+            margin-bottom: 1.2rem;
+        }
+
+            .form-header h2 {
+                color: var(--ink);
+                font-weight: 700;
+                margin-bottom: 0.45rem;
+                font-size: var(--h2);
+                letter-spacing: -0.5px;
+            }
+
+            .form-header p {
+                color: var(--muted);
+                font-size: var(--h5);
+                margin-bottom: 0;
+            }
+
+        .pertamina-brand {
+            background: linear-gradient(135deg, var(--brand-blue), var(--brand-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .form-control {
+            border: 2px solid var(--line);
+            border-radius: var(--radius-sm);
+            padding: 0.7rem 0.875rem;
+            font-size: var(--fs-sm);
+            transition: all 0.3s ease;
+            background: var(--bg);
+            font-family: 'Poppins', sans-serif;
+        }
+
+            .form-control:focus {
+                border-color: var(--primary);
+                box-shadow: 0 0 0 3px rgba(15, 123, 217, 0.1);
+                transform: translateY(-1px);
+            }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--ink);
+            margin-bottom: 0.4rem;
+            font-size: var(--fs-sm);
+            display: flex;
+            align-items: center;
+        }
+
+            .form-label::after {
+                content: '*';
+                color: var(--danger);
+                margin-left: 4px;
+            }
+
+        .password-toggle {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: var(--fs-sm);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .password-toggle:hover {
+                color: var(--primary);
+                background: var(--soft);
+                transform: translateY(-50%) scale(1.05);
+            }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, var(--primary), #0a5db0);
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 0.8rem 1.1rem;
+            font-weight: 600;
+            font-size: var(--h5);
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+            .btn-login::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                transition: left 0.5s;
+            }
+
+            .btn-login:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(15, 123, 217, 0.3);
+            }
+
+                .btn-login:hover::before {
+                    left: 100%;
+                }
+
+            .btn-login:active {
+                transform: translateY(0);
+            }
+
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .form-check-input:focus {
+            box-shadow: 0 0 0 3px rgba(15, 123, 217, 0.1);
+        }
+
+        .form-check-label {
+            font-size: var(--fs-sm);
+            color: var(--muted);
+            cursor: pointer;
+        }
+
+        .password-info {
+            background: var(--soft);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+
+            .password-info:hover {
+                transform: translateX(4px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            }
+
+            .password-info h6 {
+                color: var(--ink);
+                font-weight: 700;
+                margin-bottom: 0.4rem;
+                font-size: var(--fs-sm);
+                display: flex;
+                align-items: center;
+            }
+
+                .password-info h6 i {
+                    margin-right: 0.5rem;
+                    color: var(--primary);
+                }
+
+            .password-info p {
+                color: var(--muted);
+                font-size: var(--fs-xs);
+                margin: 0;
+                line-height: 1.4;
+            }
+
+        .footer-text {
+            font-size: var(--fs-xs);
+            color: var(--muted);
+            text-align: center;
+            margin-top: 1.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--line);
+        }
+
+        .form-text {
+            font-size: var(--fs-xs);
+            color: var(--muted);
+            margin-top: 0.25rem;
+        }
+
+        /* ==================== ALERT STYLING ==================== */
+        .alert {
+            padding: 0.875rem 1rem;
+            font-size: var(--fs-sm);
+            border-radius: var(--radius-sm);
+            border: 1px solid;
+            border-left: 4px solid;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .alert-danger {
+            border-color: #f5c6cb;
+            border-left-color: var(--danger);
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        }
+
+        /* 👉 Tambahan: style untuk alert sukses (info password diubah) */
+        .alert-success {
+            border-color: #badbcc;
+            border-left-color: #198754;
+            background: linear-gradient(135deg, #d1e7dd, #badbcc);
+            color: #0f5132;
+        }
+
+        .btn-close {
+            padding: 0.75rem;
+            font-size: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+            .btn-close:hover {
+                transform: scale(1.1);
+                background: rgba(0,0,0,0.1);
+            }
+
+        /* ==================== INPUT VALIDATION ==================== */
+        .is-valid {
+            border-color: #198754 !important;
+            box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1) !important;
+        }
+
+        .is-invalid {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
+        }
+
+        /* Password strength bar */
+        .password-strength {
+            height: 4px;
+            background: var(--line);
+            border-radius: 2px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--danger);
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+            .password-strength-bar.weak {
+                width: 33%;
+                background: var(--danger);
+            }
+
+            .password-strength-bar.medium {
+                width: 66%;
+                background: #ffc107;
+            }
+
+            .password-strength-bar.strong {
+                width: 100%;
+                background: #198754;
+            }
+
+        /* ==================== RESPONSIVE ==================== */
+        @@media (max-width: 992px) {
+            .login-image {
+                min-height: 260px;
+                padding: 1.25rem;
+            }
+
+            .login-form {
+                padding: 2rem 2rem;
+                min-height: auto;
+                justify-content: flex-start;
+            }
+
+            .login-form-inner {
+                max-width: 480px;
+                margin-top: 1rem;
+            }
+
+            .pertamina-logo {
+                width: 72px;
+            }
+
+            .feature-list {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+        }
+
+        @@media (max-width: 768px) {
+            .login-wrapper {
+                min-height: 100vh;
+            }
+
+            .login-image {
+                min-height: 220px;
+                padding: 1.1rem;
+            }
+
+            .login-form {
+                padding: 1.75rem 1.5rem;
+                min-height: auto;
+            }
+
+            .login-form-inner {
+                max-width: 100%;
+                margin-top: 0.5rem;
+            }
+
+            .image-content h3 {
+                font-size: 22px;
+            }
+
+            .pertamina-logo {
+                width: 60px;
+            }
+
+            .feature-list {
+                display: none;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .login-form {
+                padding: 1.5rem 1.25rem;
+            }
+
+            .form-header h2 {
+                font-size: var(--h3);
+            }
+
+            .btn-login {
+                padding: 0.75rem 1rem;
+                font-size: var(--fs-sm);
+            }
+        }
+
+        /* ==================== LOADING STATE & RIPPLE ==================== */
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+            .btn-loading::after {
+                content: '';
+                position: absolute;
+                width: 20px;
+                height: 20px;
+                top: 50%;
+                left: 50%;
+                margin-left: -10px;
+                margin-top: -10px;
+                border: 2px solid transparent;
+                border-radius: 50%;
+                border-top: 2px solid #ffffff;
+                border-right: 2px solid #ffffff;
+                animation: spin 0.8s linear infinite;
+            }
+
+        @@keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+        }
+
+        @@keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .btn-login, .password-toggle {
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="login-page-wrapper">
+        <div class="container-fluid g-0">
+            <div class="login-wrapper row g-0">
+
+                <!-- Image Section -->
+                <div class="col-lg-7 login-image">
+                    <div class="image-content">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Pertamina_Logo.svg/1280px-Pertamina_Logo.svg.png"
+                             alt="Pertamina" class="pertamina-logo">
+                        <h3>Utilities HR System</h3>
+                        <p>Platform terintegrasi untuk manajemen SDM departemen utilities dengan fitur lengkap dan real-time monitoring.</p>
+
+                        <ul class="feature-list">
+                            <li><i class="bi bi-people-fill"></i> Manajemen Data Pekerja</li>
+                            <li><i class="bi bi-briefcase-fill"></i> Penginputan Dinas & Cuti</li>
+                            <li><i class="bi bi-patch-check-fill"></i> Tracking Sertifikasi</li>
+                            <li><i class="bi bi-box-seam"></i> Inventory Material</li>
+                            <li><i class="bi bi-graph-up"></i> Analytics & Reporting</li>
+                            <li><i class="bi bi-shield-check"></i> Keamanan Terjamin</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Form Section -->
+                <div class="col-lg-5 login-form">
+                    <div class="login-form-inner">
+                        <div class="form-header">
+                            <h2>Masuk ke <span class="pertamina-brand">Utilities HR</span></h2>
+                            <p>Silakan masuk dengan kredensial akun Anda</p>
+                        </div>
+
+                        @* 👉 INFO PASSWORD TERAKHIR DIUBAH (kalau ada) *@
+                        @if (!string.IsNullOrWhiteSpace(passwordInfo))
+                        {
+                            <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <span>@passwordInfo</span>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        }
+
+                        <form id="loginForm"
+                              asp-controller="Account"
+                              asp-action="Login"
+                              method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                            @* ALERT ERROR HANYA MUNCUL SETELAH POST *@
+                            @if (hasModelError || !string.IsNullOrWhiteSpace(errorMessage))
+                            {
+                                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                                    <div class="d-flex align-items-center">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        <strong class="me-2">Terjadi kesalahan:</strong>
+                                    </div>
+
+                                    <ul class="mb-0 mt-2 ps-3">
+                                        @if (!string.IsNullOrWhiteSpace(errorMessage))
+                                        {
+                                            <li>@errorMessage</li>
+                                        }
+                                        @if (hasModelError)
+                                        {
+                                            @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                            {
+                                                <li>@err.ErrorMessage</li>
+                                            }
+                                        }
+                                    </ul>
+
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="bi bi-envelope me-2"></i>Alamat Email
+                                </label>
+                                <input id="email"
+                                       name="email"
+                                       class="form-control"
+                                       type="email"
+                                       required
+                                       placeholder="nama@pertamina.com"
+                                       autocomplete="email" />
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>Gunakan email perusahaan Anda
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="bi bi-lock me-2"></i>Kata Sandi
+                                </label>
+                                <div class="password-wrapper">
+                                    <input name="password"
+                                           id="password"
+                                           class="form-control"
+                                           type="password"
+                                           required
+                                           placeholder="Masukkan kata sandi Anda"
+                                           autocomplete="current-password" />
+                                    <button type="button" class="password-toggle" id="togglePassword" aria-label="Toggle password visibility">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="password-strength mt-2">
+                                    <div class="password-strength-bar" id="passwordStrength"></div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" name="rememberMe" id="rememberMe" />
+                                <label class="form-check-label" for="rememberMe">
+                                    Ingat saya di perangkat ini
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 btn-login mb-3" id="loginButton">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Masuk ke Sistem
+                            </button>
+
+                            @* <div class="password-info">
+                                <h6><i class="bi bi-lightbulb"></i>Tips Keamanan</h6>
+                                <p>Pastikan Anda menggunakan kata sandi yang kuat dan tidak membagikan kredensial login kepada siapapun.</p>
+                            </div> *@
+                        </form>
+
+                        <div class="footer-text">
+                            @* <div class="mb-2">
+                                <i class="bi bi-shield-check me-1"></i>
+                                Sistem Terjamin · Data Terlindungi
+                            </div> *@
+                            <div>
+                                &copy; 2025 PT Pertamina (Persero) - Utilities Department. All rights reserved.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Semua script dibungkus supaya aman
+        document.addEventListener('DOMContentLoaded', function () {
+            const passwordInput = document.getElementById('password');
+            const togglePassword = document.getElementById('togglePassword');
+            const strengthBar = document.getElementById('passwordStrength');
+            const form = document.getElementById('loginForm');
+            const loginButton = document.getElementById('loginButton');
+            const emailInput = document.getElementById('email');
+
+            // Toggle password visibility
+            if (togglePassword && passwordInput) {
+                togglePassword.addEventListener('click', function () {
+                    const icon = this.querySelector('i');
+
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        icon.classList.remove('bi-eye');
+                        icon.classList.add('bi-eye-slash');
+                        this.setAttribute('aria-label', 'Sembunyikan password');
+                    } else {
+                        passwordInput.type = 'password';
+                        icon.classList.remove('bi-eye-slash');
+                        icon.classList.add('bi-eye');
+                        this.setAttribute('aria-label', 'Tampilkan password');
+                    }
+                });
+            }
+
+            // Password strength indicator
+            if (passwordInput && strengthBar) {
+                passwordInput.addEventListener('input', function () {
+                    const password = this.value;
+                    let strength = 0;
+
+                    if (password.length >= 8) strength++;
+                    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
+                    if (password.match(/\d/)) strength++;
+                    if (password.match(/[^a-zA-Z\d]/)) strength++;
+
+                    strengthBar.className = 'password-strength-bar';
+                    if (password.length > 0) {
+                        if (strength <= 1) {
+                            strengthBar.classList.add('weak');
+                        } else if (strength <= 3) {
+                            strengthBar.classList.add('medium');
+                        } else {
+                            strengthBar.classList.add('strong');
+                        }
+                    }
+                });
+            }
+
+            // Form submission handling (TANPA menghalangi submit)
+            if (form && loginButton && emailInput && passwordInput) {
+                form.addEventListener('submit', function (e) {
+                    const email = emailInput.value.trim();
+                    const pwd = passwordInput.value.trim();
+
+                    if (!email || !pwd) {
+                        // biarkan HTML5 validation jalan
+                        return;
+                    }
+
+                    // spinner jalan, request tetap dikirim ke server
+                    loginButton.disabled = true;
+                    loginButton.classList.add('btn-loading');
+                });
+            }
+
+            // Input validation visual
+            const inputs = document.querySelectorAll('input[required]');
+            inputs.forEach(input => {
+                input.addEventListener('blur', function () {
+                    this.classList.remove('is-valid', 'is-invalid');
+
+                    if (this.value.trim() === '') {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.add('is-valid');
+                    }
+                });
+
+                input.addEventListener('input', function () {
+                    if (this.value.trim() !== '') {
+                        this.classList.remove('is-invalid');
+                    }
+                });
+            });
+
+            // Auto focus on email input
+            if (emailInput) {
+                setTimeout(() => emailInput.focus(), 400);
+            }
+
+            // Ripple effect
+            document.addEventListener('click', function (e) {
+                const target = e.target.closest('.btn-login, .password-toggle');
+                if (!target) return;
+
+                const rect = target.getBoundingClientRect();
+                const ripple = document.createElement('span');
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                ripple.classList.add('ripple');
+
+                target.appendChild(ripple);
+
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+    </script>
+
+</body>
+</html>

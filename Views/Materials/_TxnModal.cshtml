@@ -1,0 +1,56 @@
+﻿@model UtilitiesHR.Models.TxnDto
+@{
+    Layout = null;
+    var m = ViewBag.Material as UtilitiesHR.Models.Material;
+}
+
+<form asp-action="TxnCreate" id="ajax-form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="MaterialId" />
+    <input type="hidden" asp-for="Jenis" />
+
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="alert alert-info small">
+                <strong>@m?.NamaBarang</strong> (@m?.KodeBarang)<br />
+                Stok tersedia: <strong>@m?.JumlahBarang @m?.Satuan</strong>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Tanggal</label>
+            <input asp-for="Tanggal" type="date" class="form-control" required />
+            <span asp-validation-for="Tanggal" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Jumlah</label>
+            <input asp-for="Jumlah" type="number" min="1" class="form-control" required />
+            <span asp-validation-for="Jumlah" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">Penanggung Jawab</label>
+            <input asp-for="PenanggungJawab" class="form-control" />
+            <span asp-validation-for="PenanggungJawab" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">Keterangan</label>
+            <textarea asp-for="Keterangan" rows="2" class="form-control"></textarea>
+        </div>
+
+        <div class="col-12 d-flex gap-2 mt-3 justify-content-end">
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    data-bs-dismiss="modal">
+                <i class="bi bi-x-lg"></i> Batal
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg"></i> Simpan Transaksi
+            </button>
+        </div>
+    </div>
+</form>

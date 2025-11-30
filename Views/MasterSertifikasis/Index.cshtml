@@ -1,0 +1,407 @@
+﻿@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model IEnumerable<UtilitiesHR.Models.MasterSertifikasi>
+
+@{
+    ViewData["Title"] = "Master Sertifikasi";
+
+    var q = Context.Request.Query["q"].ToString();
+}
+
+
+<form id="token-form-master" method="post" style="display:none">
+    @Html.AntiForgeryToken()
+</form>
+
+<style>
+    /* ===== WRAPPER KARTU TABEL (sama konsep dengan Pekerja) ===== */
+    .master-table-wrapper {
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 32px rgba(15,23,42,.06);
+        padding: 1.2rem 1.4rem;
+        background: #ffffff;
+    }
+
+    .master-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-bottom: 0;
+    }
+
+        .master-table thead th {
+            background-color: #f3f6fb;
+            color: #1f2937;
+            font-weight: 600;
+            font-size: .8rem;
+            padding: .7rem 1rem;
+            border-bottom: 2px solid #e1e6f0 !important;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .master-table tbody td {
+            padding: .65rem 1rem;
+            border-bottom: 1px solid #eef1f7;
+            vertical-align: middle;
+            font-size: .8rem;
+        }
+
+        .master-table tbody tr:nth-child(odd) {
+            background-color: #ffffff;
+        }
+
+        .master-table tbody tr:nth-child(even) {
+            background-color: #f9fafc;
+        }
+
+        .master-table tbody tr:hover {
+            background-color: #edf4ff;
+        }
+
+    /* ===== AKSI DI HEADER (tombol kanan breadcrumb) ===== */
+    .feature-header-actions {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        flex-wrap: wrap;
+    }
+
+        .feature-header-actions .btn {
+            min-width: 40px;
+            border-radius: 999px;
+            padding-inline: 1.0rem;
+            font-size: .78rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .feature-header-actions .btn i {
+                font-size: .9rem;
+            }
+
+    .btn-pill-outline {
+        background: #ffffff;
+        border-radius: 999px;
+        border: 1px solid #d0d7e6;
+        color: #0f172a;
+    }
+
+        .btn-pill-outline i {
+            color: #0a5db0;
+        }
+
+        .btn-pill-outline:hover {
+            background: #f3f6fb;
+            border-color: #c3cce3;
+        }
+
+    .btn-pill-primary {
+        border-radius: 999px;
+        background: #0f7bd9;
+        border-color: #0f7bd9;
+        color: #ffffff;
+        box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+    }
+
+        .btn-pill-primary:hover {
+            background: #0a5db0;
+            border-color: #0a5db0;
+        }
+
+        .btn-pill-primary i {
+            color: #ffffff;
+        }
+
+    /* ===== AKSI DI TABEL (bulat, sama dengan Employees) ===== */
+    .table-actions {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: nowrap;
+        gap: .4rem;
+        white-space: nowrap;
+    }
+
+    .table-action-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        font-size: 14px;
+        padding: 0;
+        box-shadow: 0 2px 6px rgba(15,23,42,.12);
+        transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+    }
+
+        .table-action-btn i {
+            font-size: 15px;
+        }
+
+        .table-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(15,23,42,.16);
+        }
+
+    .table-action-edit {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .table-action-delete {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .table-action-edit:hover {
+        background: #fde68a;
+    }
+
+    .table-action-delete:hover {
+        background: #fecaca;
+    }
+
+    .table-action-btn:focus {
+        outline: 2px solid rgba(15,123,217,.35);
+        outline-offset: 1px;
+    }
+
+    @@media (max-width: 575.98px) {
+        .feature-header-actions {
+            width: 100%;
+            justify-content: flex-start;
+        }
+
+            .feature-header-actions .btn span {
+                display: none !important; /* di HP hanya icon */
+            }
+
+            .feature-header-actions .btn {
+                padding-inline: .6rem;
+            }
+
+        .table-actions {
+            justify-content: center;
+        }
+    }
+</style>
+
+@* ====== TOMBOL AKSI DI KANAN BREADCRUMB (SECTION) ====== *@
+@section PageActions {
+    <div class="feature-header-actions">
+        <a class="btn btn-pill-outline"
+           href="@Url.Action("Index", "Sertifikasis")"
+           title="Kembali ke Data Sertifikasi">
+            <i class="bi bi-card-checklist me-1"></i>
+            <span class="d-none d-md-inline">Data Sertifikasi</span>
+        </a>
+
+        <button type="button"
+                class="btn btn-pill-primary"
+                id="btn-create-master-modal"
+                title="Tambah Master Sertifikasi">
+            <i class="bi bi-plus-lg me-1"></i>
+            <span class="d-none d-md-inline">Tambah Master</span>
+        </button>
+    </div>
+}
+
+
+
+<!-- KOTAK KARTU UNTUK TABEL -->
+<div class="master-table-wrapper">
+    <div class="table-responsive">
+        <table id="tbl-master-sertifikasi"
+               class="table master-table align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:60px;">No</th>
+                    <th>Nama</th>
+                    <th>Kategori</th>
+                    <th>Keterangan</th>
+                    <th class="text-center" style="width:130px;" data-priority="1">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model)
+                {
+                    <tr>
+                        <td class="text-center"></td> @* nomor diisi otomatis DataTables *@
+                        <td>@m.Nama</td>
+                        <td>@(m.Kategori ?? "-")</td>
+                        <td>@(m.Keterangan ?? "-")</td>
+                        <td class="text-center text-nowrap">
+                            <div class="table-actions">
+                                <button type="button"
+                                        class="table-action-btn table-action-edit btn-edit-master"
+                                        data-id="@m.Id"
+                                        title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button type="button"
+                                        class="table-action-btn table-action-delete btn-delete-master"
+                                        data-id="@m.Id"
+                                        data-nama="@m.Nama"
+                                        title="Hapus">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        $(function () {
+            const $ajaxModal = $('#ajax-modal');
+            const $modalBody = $ajaxModal.find('.modal-body');
+            const $modalTitle = $ajaxModal.find('.modal-title');
+
+            const token = $('#token-form-master input[name="__RequestVerificationToken"]').val();
+
+            // ===== DataTables (disamakan gaya dengan Employees) =====
+            const lang = {
+                lengthMenu: "Show _MENU_ entries",
+                search: "Search:",
+                info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                infoEmpty: "Showing 0 to 0 of 0 entries",
+                zeroRecords: "No matching records found",
+                paginate: {
+                    first: "<<",
+                    last: ">>",
+                    next: ">",
+                    previous: "<"
+                }
+            };
+
+            const masterTable = $('#tbl-master-sertifikasi').DataTable({
+                responsive: true,
+                order: [[1, 'asc']],        // urut Nama
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
+                language: lang,
+                dom:
+                    "<'row g-2 mb-2'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
+                columnDefs: [
+                    { targets: 0, orderable: false, searchable: false }, // No
+                    { targets: 4, orderable: false, searchable: false }  // Aksi
+                ]
+            });
+
+            // autonumber kolom No
+            masterTable.on('draw.dt', function () {
+                const info = masterTable.page.info();
+                masterTable.column(0, { search: 'applied', order: 'applied' })
+                    .nodes()
+                    .each(function (cell, i) {
+                        cell.innerHTML = info.start + i + 1;
+                    });
+            }).draw();
+
+            // ===== CREATE POPUP =====
+            $('#btn-create-master-modal').on('click', function () {
+                $modalTitle.text('Tambah Master Sertifikasi');
+                $modalBody.html('<div class="text-center py-5 text-muted small">Memuat form…</div>');
+
+                $modalBody.load('@Url.Action("Create")', function () {
+                    $ajaxModal.modal('show');
+                });
+            });
+
+            // ===== EDIT POPUP =====
+            $('body').on('click', '.btn-edit-master', function () {
+                const id = $(this).data('id');
+                $modalTitle.text('Edit Master Sertifikasi');
+                $modalBody.html('<div class="text-center py-5 text-muted small">Memuat data…</div>');
+
+                $modalBody.load('@Url.Action("Edit")/' + id, function () {
+                    $ajaxModal.modal('show');
+                });
+            });
+
+            // ===== SUBMIT CREATE / EDIT (AJAX) =====
+            $('body').on('submit', '#ajax-form-master', function (e) {
+                e.preventDefault();
+                const $form = $(this);
+
+                if ($form.valid && !$form.valid()) return;
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    success: function (res) {
+                        if (res && res.success) {
+                            $ajaxModal.modal('hide');
+                            Swal.fire('Berhasil', res.message, 'success')
+                                .then(() => window.location.reload());
+                        } else if (res) {
+                            let msg = res.message || 'Gagal menyimpan data.';
+                            if (res.errors && res.errors.length) {
+                                msg += "<ul class='text-start mt-2 mb-0'>";
+                                res.errors.forEach(e => msg += `<li>${e}</li>`);
+                                msg += "</ul>";
+                            }
+                            Swal.fire({ title: 'Gagal', html: msg, icon: 'error' });
+                        } else {
+                            Swal.fire('Error', 'Respon server tidak dikenal.', 'error');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                    }
+                });
+            });
+
+            // ===== DELETE (AJAX + SweetAlert) =====
+            $('body').on('click', '.btn-delete-master', function () {
+                const id = $(this).data('id');
+                const nama = $(this).data('nama');
+
+                Swal.fire({
+                    title: 'Anda yakin?',
+                    text: `Data master sertifikasi "${nama}" akan dihapus permanen.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonText: 'Batal',
+                    confirmButtonText: 'Ya, hapus'
+                }).then((result) => {
+                    if (!result.isConfirmed) return;
+
+                    $.ajax({
+                        url: '@Url.Action("Delete")',
+                        type: 'POST',
+                        data: {
+                            "__RequestVerificationToken": token,
+                            "id": id
+                        },
+                        success: function (res) {
+                            if (res && res.success) {
+                                Swal.fire('Dihapus!', res.message, 'success')
+                                    .then(() => window.location.reload());
+                            } else {
+                                Swal.fire('Gagal!', res?.message || 'Gagal menghapus data.', 'error');
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}

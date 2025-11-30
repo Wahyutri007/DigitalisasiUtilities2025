@@ -1,0 +1,28 @@
+﻿@model UtilitiesHR.Models.JenisDinas
+@{
+    Layout = null;
+}
+<form id="ajax-form" asp-action="Create" asp-controller="JenisDinas" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+    <div class="mb-2">
+        <label class="form-label">Nama Jenis Dinas</label>
+        <input asp-for="Nama" class="form-control" />
+        <span asp-validation-for="Nama" class="text-danger"></span>
+    </div>
+    <div class="mb-2">
+        <label class="form-label">Keterangan (opsional)</label>
+        <input asp-for="Keterangan" class="form-control" />
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end mt-3">
+        <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">
+            <i class="bi bi-x-lg"></i> Batal
+        </button>
+        <button class="btn btn-primary" type="submit">
+            <i class="bi bi-check-lg"></i> Simpan
+        </button>
+    </div>
+</form>
+<script> $.validator.unobtrusive.parse("#ajax-form"); </script>

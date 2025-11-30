@@ -1,0 +1,352 @@
+﻿@model IEnumerable<UtilitiesHR.Controllers.CutiLimitsController.VM>
+
+@{
+    ViewData["Title"] = "Pengaturan Limit Cuti";
+    ViewData["Breadcrumb"] = "Pengaturan Limit Cuti";
+
+    var msg = TempData["Msg"] as string; // optional alert inline
+}
+
+@section Styles {
+    <style>
+        /* ====== HEADER ACTIONS (KANAN BREADCRUMB) ====== */
+        .cuti-limit-actions .btn {
+            min-width: 38px;
+        }
+
+            .cuti-limit-actions .btn i {
+                font-size: 1rem;
+            }
+
+        .btn-pill-outline {
+            background: #ffffff;
+            border-radius: 999px;
+            border: 1px solid #d0d7e6;
+            color: #0f172a;
+        }
+
+            .btn-pill-outline i {
+                color: #0a5db0;
+            }
+
+            .btn-pill-outline:hover {
+                background: #f3f6fb;
+                border-color: #c3cce3;
+            }
+
+        .btn-pill-primary {
+            border-radius: 999px;
+            background: #0f7bd9;
+            border-color: #0f7bd9;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+        }
+
+            .btn-pill-primary:hover {
+                background: #0a5db0;
+                border-color: #0a5db0;
+            }
+
+            .btn-pill-primary i {
+                color: #ffffff;
+            }
+
+        @@media (max-width: 575.98px) {
+            .cuti-limit-actions .btn span {
+                display: none !important; /* di HP icon saja */
+            }
+
+            .cuti-limit-actions .btn {
+                padding-inline: .55rem;
+            }
+        }
+
+        /* ====== WRAPPER CARD TABEL ====== */
+        .cuti-limits-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            box-shadow: 0 10px 32px rgba(15,23,42,.06);
+            padding: 1.2rem 1.4rem;
+            background: #ffffff;
+            margin-top: 0.75rem;
+        }
+
+        .cuti-limits-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+
+            .cuti-limits-table thead th {
+                background-color: #f3f6fb;
+                color: #1f2937;
+                font-weight: 600;
+                font-size: .8rem;
+                padding: .7rem 1rem;
+                border-bottom: 2px solid #e1e6f0 !important;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+
+            .cuti-limits-table tbody td {
+                padding: .65rem 1rem;
+                border-bottom: 1px solid #eef1f7;
+                vertical-align: middle;
+                font-size: .8rem;
+            }
+
+            .cuti-limits-table tbody tr:nth-child(odd) {
+                background-color: #ffffff;
+            }
+
+            .cuti-limits-table tbody tr:nth-child(even) {
+                background-color: #f9fafc;
+            }
+
+            .cuti-limits-table tbody tr:hover {
+                background-color: #edf4ff;
+            }
+
+        .cuti-limit-note {
+            font-size: .8rem;
+            color: #64748b;
+        }
+    </style>
+}
+
+@* ====== TOMBOL DI HEADER (SEJAJAR DENGAN BREADCRUMB) ====== *@
+@section PageActions {
+    <div class="cuti-limit-actions d-flex flex-wrap justify-content-end gap-2">
+        <a class="btn btn-pill-outline" href="/Cutis">
+            <i class="bi bi-arrow-left me-1"></i>
+            <span class="d-none d-md-inline">Ke Cuti</span>
+        </a>
+    </div>
+}
+
+@* ====== ISI HALAMAN SESUDAH HEADER GLOBAL ====== *@
+
+@if (!string.IsNullOrWhiteSpace(msg))
+{
+    <div class="alert alert-info mb-3">@msg</div>
+}
+
+<div class="mb-2">
+    <div class="cuti-limit-note">
+        Atur limit cuti tahunan karyawan secara massal. Centang karyawan yang ingin diubah,
+        lalu isi nilai limit (hari) dan klik Simpan.
+    </div>
+</div>
+
+<form asp-action="BulkSet" method="post" id="bulk-form">
+    @Html.AntiForgeryToken()
+
+    <div class="row g-2 align-items-end mb-2">
+        <div class="col-sm-3 col-md-2">
+            <label class="form-label">Set Limit (hari)</label>
+            <input type="number" name="limit" min="0" max="365" class="form-control" required />
+        </div>
+
+        <!-- MASTER: Centang semua (halaman ini) -->
+        <div class="col-sm-4 col-md-3">
+            <div class="form-check mt-4">
+                <input class="form-check-input" type="checkbox" id="checkAllTop" />
+                <label class="form-check-label" for="checkAllTop">
+                    Centang semua (halaman ini)
+                </label>
+            </div>
+        </div>
+
+        <div class="col-sm-12 col-md-3">
+            <button type="submit" class="btn btn-pill-primary w-100 mt-3 mt-md-0">
+                <i class="bi bi-save me-1"></i>
+                <span class="d-none d-md-inline">Simpan Limit</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="cuti-limits-table-wrapper">
+        <div class="table-responsive">
+            <table id="tbl-ringkasan" class="table cuti-limits-table align-middle w-100">
+                <thead>
+                    <tr>
+                        <th style="width:42px" class="text-center">
+                            <input type="checkbox" id="checkAll" aria-label="Centang semua (halaman ini)" />
+                        </th>
+                        <th>Nama</th>
+                        <th>Nopeg</th>
+                        <th class="text-center">Limit Saat Ini</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Model ?? Enumerable.Empty<UtilitiesHR.Controllers.CutiLimitsController.VM>())
+                    {
+                        <tr data-id="@e.Id">
+                            <td class="text-center">
+                                <input class="row-check" type="checkbox" name="selectedIds" value="@e.Id" />
+                            </td>
+                            <td>@e.Nama</td>
+                            <td>@e.Nopeg</td>
+                            <td class="text-center">
+                                @((e.Limit is null) ? "Default (12)" : e.Limit + " hari")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        // Trigger SweetAlert berdasarkan TempData (sudah disiapkan di controller)
+        window.__swal = {
+            icon: '@(TempData["SwalIcon"] ?? "")',
+            title: '@(TempData["SwalTitle"] ?? "")',
+            text: '@(TempData["SwalText"] ?? "")',
+            toast: '@(TempData["SwalToast"] ?? "")' === '1'
+        };
+        if (window.__swal.icon) {
+            if (window.__swal.toast) {
+                Swal.fire({
+                    icon: window.__swal.icon,
+                    title: window.__swal.title || '',
+                    text: window.__swal.text || '',
+                    toast: true,
+                    position: 'top-end',
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire({
+                    icon: window.__swal.icon,
+                    title: window.__swal.title || '',
+                    html: window.__swal.text || ''
+                });
+            }
+        }
+    </script>
+
+    <script>
+        (function () {
+            // ===== DataTables =====
+            const dt = $('#tbl-ringkasan').DataTable({
+                responsive: true,
+                dom:
+                    "<'row g-2 mb-3'<'col-6 col-md-4'l><'col-6 col-md-4 offset-md-4'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
+                order: [[1, 'asc']],
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
+                language: {
+                    search: "Cari:",
+                    lengthMenu: "_MENU_ baris",
+                    info: "_START_–_END_ dari _TOTAL_",
+                    infoEmpty: "Tidak ada data",
+                    zeroRecords: "Tidak ditemukan",
+                    paginate: { first: "<<", last: ">>", next: ">", previous: "<" }
+                },
+                columnDefs: [
+                    { targets: 0, orderable: false, searchable: false, className: 'text-center' },
+                    { targets: 3, className: 'text-center' }
+                ]
+            });
+
+            const $checkAllHdr = $('#checkAll');
+            const $checkAllTop = $('#checkAllTop');
+            const $form = $('#bulk-form');
+
+            function setPageChecked(checked) {
+                dt.rows({ page: 'current' }).every(function () {
+                    const row = this.node();
+                    const cb = row.querySelector('.row-check');
+                    if (cb && !cb.disabled) cb.checked = checked;
+                });
+            }
+
+            function syncTopWithHeader() {
+                $checkAllTop.prop('checked', $checkAllHdr.prop('checked'));
+            }
+
+            function refreshHeaderFromRows() {
+                const $rows = $(dt.rows({ page: 'current' }).nodes());
+                const enabled = $rows.find('.row-check:not(:disabled)');
+                const allChecked =
+                    enabled.length > 0 &&
+                    enabled.filter(':checked').length === enabled.length;
+
+                $checkAllHdr.prop('checked', allChecked);
+                syncTopWithHeader();
+            }
+
+            // header → rows
+            $checkAllHdr.on('change', function () {
+                setPageChecked(this.checked);
+                syncTopWithHeader();
+            });
+
+            // top → header + rows
+            $checkAllTop.on('change', function () {
+                $checkAllHdr.prop('checked', this.checked).trigger('change');
+            });
+
+            // per baris → header/top
+            $('#tbl-ringkasan').on('change', '.row-check', refreshHeaderFromRows);
+
+            // redraw → jaga state header/top
+            dt.on('draw.dt', refreshHeaderFromRows);
+
+            // ===== Submit dengan SweetAlert2 =====
+            $form.on('submit', function (ev) {
+                ev.preventDefault();
+
+                const limitVal = parseInt($form.find('input[name="limit"]').val(), 10);
+                const selected = Array.from(document.querySelectorAll('.row-check:checked'))
+                    .map(cb => cb.value);
+
+                if (!Number.isFinite(limitVal) || limitVal < 0 || limitVal > 365) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Nilai limit tidak valid',
+                        text: 'Harus 0–365 hari.',
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                    return;
+                }
+
+                if (selected.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Belum ada karyawan yang dipilih',
+                        text: 'Centang minimal 1 baris.',
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                    return;
+                }
+
+                Swal.fire({
+                    icon: 'question',
+                    title: 'Konfirmasi Penyimpanan',
+                    html: `<div class="text-start">
+                             <p>Akan menerapkan limit <b>${limitVal} hari</b> ke <b>${selected.length}</b> karyawan terpilih.</p>
+                           </div>`,
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, simpan',
+                    cancelButtonText: 'Batal'
+                }).then(res => {
+                    if (!res.isConfirmed) return;
+
+                    // lepas handler supaya tidak loop, lalu submit normal (PRG)
+                    $form.off('submit').trigger('submit');
+                });
+            });
+
+            // init awal
+            refreshHeaderFromRows();
+        })();
+    </script>
+}

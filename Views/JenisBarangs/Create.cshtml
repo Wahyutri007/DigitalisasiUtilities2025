@@ -1,0 +1,41 @@
+﻿@* @model UtilitiesHR.Models.JenisBarang
+
+<div class="p-4">
+    <h5 class="mb-3">Tambah Jenis Barang</h5>
+    <form method="post" action="/Materials/JenisCreate" id="jenis-form">
+        @Html.AntiForgeryToken()
+        <div class="row g-3">
+            <div class="col-12 col-md-6">
+                <label class="form-label">Nama Jenis</label>
+                <input asp-for="Nama" class="form-control" />
+                <span asp-validation-for="Nama" class="text-danger small"></span>
+            </div>
+            <div class="col-12 col-md-6">
+                <label class="form-label">Keterangan</label>
+                <input asp-for="Keterangan" class="form-control" />
+            </div>
+        </div>
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+            <button type="submit" class="btn btn-primary">Simpan</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function(){
+        $('#jenis-form').on('submit', function(e){
+            e.preventDefault();
+            $.post('/Materials/JenisCreate', $(this).serialize())
+             .done(function(resp){
+                if (resp?.ok) {
+                    // kembali ke form material dengan option jenis yg baru
+                    $('#ajax-body').load('/Materials/CreatePartial');
+                } else if (typeof resp === 'string') {
+                    $('#ajax-body').html(resp);
+                }
+             })
+             .fail(function(){ alert('Gagal menyimpan.'); });
+        });
+    })();
+</script> *@

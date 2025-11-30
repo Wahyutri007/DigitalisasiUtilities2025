@@ -1,0 +1,26 @@
+﻿@model IEnumerable<UtilitiesHR.Models.JenisBarang>
+@{
+    ViewData["Title"] = "Master Jenis Barang";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Master Jenis Barang</h3>
+    <a class="btn btn-primary" asp-action="Create">Tambah</a>
+</div>
+<table class="table table-bordered align-middle">
+    <thead class="table-light"><tr><th>Nama</th><th>Keterangan</th><th style="width:160px" class="text-center">Aksi</th></tr></thead>
+    <tbody>
+        @foreach (var j in Model ?? Enumerable.Empty<UtilitiesHR.Models.JenisBarang>())
+        {
+            <tr>
+                <td>@j.Nama</td>
+                <td>@j.Keterangan</td>
+                <td class="text-center">
+                    <div class="btn-group btn-group-sm">
+                        <a class="btn btn-outline-primary" asp-action="Edit" asp-route-id="@j.Id">Edit</a>
+                        <a class="btn btn-outline-danger" asp-action="Delete" asp-route-id="@j.Id">Hapus</a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

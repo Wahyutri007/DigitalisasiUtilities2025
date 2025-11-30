@@ -1,0 +1,31 @@
+﻿@model UtilitiesHR.Models.Dinas
+@{
+    Layout = null;
+}
+<div class="card card-body shadow-sm border-0">
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Nama Pekerja</dt>
+        <dd class="col-sm-9">@Model.Employee?.NamaLengkap (@Model.Employee?.NopegPersero)</dd>
+
+        <dt class="col-sm-3">Jenis Dinas</dt>
+        <dd class="col-sm-9">@Model.JenisDinas?.Nama</dd>
+
+        <dt class="col-sm-3">Sifat</dt>
+        <dd class="col-sm-9">@((Model.Sifat?.ToString()) ?? "-")</dd>
+
+        <dt class="col-sm-3">Tanggal Berangkat</dt>
+        <dd class="col-sm-9">@Model.TanggalBerangkat.ToString("dd/MM/yyyy")</dd>
+
+        <dt class="col-sm-3">Tanggal Pulang</dt>
+        <dd class="col-sm-9">@Model.TanggalPulang.ToString("dd/MM/yyyy")</dd>
+
+        <dt class="col-sm-3">Lama</dt>
+        <dd class="col-sm-9">@Model.LamaHari hari</dd>
+
+        <dt class="col-sm-3">Lokasi</dt>
+        <dd class="col-sm-9">@(!string.IsNullOrWhiteSpace(Model.Lokasi) ? Model.Lokasi : "-")</dd>
+
+        <dt class="col-sm-3">Kegiatan</dt>
+        <dd class="col-sm-9">@Model.Kegiatan</dd>
+    </dl>
+</div>

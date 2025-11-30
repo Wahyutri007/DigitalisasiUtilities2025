@@ -1,0 +1,18 @@
+﻿@model UtilitiesHR.Models.Cuti
+@{
+    ViewData["Title"] = "Hapus Cuti";
+}
+<h3>Hapus Cuti</h3>
+<dl class="row">
+    <dt class="col-sm-2">Nama</dt>
+    <dd class="col-sm-10">@Model.Employee?.NamaLengkap (@Model.Employee?.NopegPersero)</dd>
+    <dt class="col-sm-2">Periode</dt>
+    <dd class="col-sm-10">@Model.TanggalMulai:yyyy-MM-dd - @Model.TanggalSelesai:yyyy-MM-dd (@Model.JumlahHari hari)</dd>
+    <dt class="col-sm-2">Tujuan</dt>
+    <dd class="col-sm-10">@Model.Tujuan</dd>
+</dl>
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button class="btn btn-danger">Hapus</button>
+    <a class="btn btn-outline-secondary" href="/Cutis">Batal</a>
+</form>

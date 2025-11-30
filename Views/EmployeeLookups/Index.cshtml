@@ -1,0 +1,223 @@
+﻿@model List<UtilitiesHR.Models.EmployeeLookup>
+
+@{
+    ViewData["Title"] = "Master Opsi Pekerja";
+    var categories = ViewBag.Categories as string[] ?? Array.Empty<string>();
+
+    // map Category → label yang tampil
+    string GetLabel(string cat) => cat switch
+    {
+        "UkWearpack" => "Uk Wearpack",
+        "UkKemejaPutih" => "Uk Kemeja Putih",
+        "UkKemejaProduk" => "Uk Kemeja Produk",
+        "UkSepatuSafety" => "Uk Sepatu Safety",
+        _ => cat
+    };
+}
+
+
+<style>
+    /* Supaya select2 + tombol Add selalu sejajar, tidak turun ke bawah */
+    .lookup-add-form {
+        display: flex;
+        gap: .5rem;
+        margin-bottom: .75rem;
+        align-items: stretch;
+    }
+
+        .lookup-add-form .select2-container {
+            flex: 1 1 auto;
+        }
+
+        .lookup-add-form button {
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+</style>
+
+
+
+<div class="row g-3">
+    @foreach (var cat in categories)
+    {
+        var list = Model
+        .Where(x => x.Category == cat)
+        .OrderBy(x => x.Value)
+        .ToList();
+
+        var label = GetLabel(cat);
+
+        <div class="col-lg-4 col-md-6 col-12 lookup-card" data-cat="@cat">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">@label</h5>
+
+                    <!-- FORM ADD DENGAN SELECT2 (tags) -->
+                    <form asp-action="Add" method="post" class="lookup-add-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="category" value="@cat" />
+
+                        <select name="value"
+                                class="form-select form-select-sm lookup-select2"
+                                data-placeholder="Tambah @label baru…">
+                            <option value=""></option>
+                            @foreach (var item in list)
+                            {
+                                <option value="@item.Value">@item.Value</option>
+                            }
+                        </select>
+
+                        <button class="btn btn-primary btn-sm" type="submit">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </form>
+
+                    <ul class="list-group list-group-flush small" style="max-height:200px;overflow-y:auto;">
+                        @if (!list.Any())
+                        {
+                            <li class="list-group-item text-muted">Belum ada data.</li>
+                        }
+                        else
+                        {
+                            foreach (var item in list)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>@item.Value</span>
+                                    <form asp-action="Delete" method="post"
+                                          class="ms-2 lookup-delete-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@item.Id" />
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger btn-delete-lookup"
+                                                data-name="@item.Value">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            // ===== Select2 untuk FILTER kategori =====
+            const $filter = $('#categoryFilter');
+
+            $filter.select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Pilih kategori…'
+            });
+
+            function applyFilter() {
+                const selected = $filter.val();
+                if (!selected || !selected.length) {
+                    $('.lookup-card').show();
+                    return;
+                }
+
+                $('.lookup-card').each(function () {
+                    const cat = $(this).data('cat');
+                    $(this).toggle(selected.indexOf(cat) >= 0);
+                });
+            }
+
+            $filter.on('change', applyFilter);
+            applyFilter(); // initial
+
+            // ===== Select2 di TIAP FORM ADD (tags) =====
+            $('.lookup-select2').each(function () {
+                const $sel = $(this);
+                const ph   = $sel.data('placeholder') || 'Tambah nilai…';
+                $sel.select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    tags: true,
+                    placeholder: ph
+                });
+            });
+
+            // ===== ADD: submit via AJAX + SweetAlert =====
+            $(document).on('submit', '.lookup-add-form', function (e) {
+                e.preventDefault();
+                const $form = $(this);
+                const $sel  = $form.find('select[name="value"]');
+                const val   = ($sel.val() || '').toString().trim();
+
+                if (!val) {
+                    Swal.fire('Gagal', 'Nilai tidak boleh kosong.', 'error');
+                    return;
+                }
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    success: function (r) {
+                        if (r && r.success) {
+                            Swal.fire('Berhasil', r.message || 'Data berhasil ditambahkan.', 'success')
+                                .then(() => window.location.reload());
+                        } else {
+                            Swal.fire(
+                                'Gagal',
+                                (r && r.message) || 'Gagal menambah data.',
+                                'error'
+                            );
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                    }
+                });
+            });
+
+            // ===== DELETE: SweetAlert konfirmasi + AJAX =====
+            $(document).on('click', '.btn-delete-lookup', function (e) {
+                e.preventDefault();
+                const $btn  = $(this);
+                const name  = $btn.data('name') || '';
+                const $form = $btn.closest('form');
+
+                Swal.fire({
+                    title: 'Hapus item?',
+                    text: name
+                        ? `Item "${name}" akan dihapus dan tidak bisa dikembalikan.`
+                        : 'Item ini akan dihapus dan tidak bisa dikembalikan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, hapus',
+                    cancelButtonText: 'Batal'
+                }).then(result => {
+                    if (!result.isConfirmed) return;
+
+                    $.ajax({
+                        url: $form.attr('action'),
+                        type: 'POST',
+                        data: $form.serialize(),
+                        success: function (r) {
+                            if (r && r.success) {
+                                Swal.fire('Berhasil', r.message || 'Data berhasil dihapus.', 'success')
+                                    .then(() => window.location.reload());
+                            } else {
+                                Swal.fire(
+                                    'Gagal',
+                                    (r && r.message) || 'Gagal menghapus data.',
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}

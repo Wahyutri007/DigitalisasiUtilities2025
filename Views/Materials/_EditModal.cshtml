@@ -1,0 +1,62 @@
+﻿@model UtilitiesHR.Models.Material
+@{
+    Layout = null;
+}
+
+<form asp-action="Edit"
+      asp-route-id="@Model.Id"
+      id="ajax-form"
+      autocomplete="off">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Kode Barang</label>
+            <input asp-for="KodeBarang" class="form-control" required />
+            <span asp-validation-for="KodeBarang" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Nama Barang</label>
+            <input asp-for="NamaBarang" class="form-control" required />
+            <span asp-validation-for="NamaBarang" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Jenis Barang</label>
+            <select asp-for="JenisBarangId"
+                    asp-items="ViewBag.JenisBarangId"
+                    class="form-select select2-modal"
+                    data-placeholder="— Pilih Jenis atau Ketik Baru —"
+                    data-tags="true"
+                    required>
+                <option value="">— Pilih Jenis atau Ketik Baru —</option>
+            </select>
+            <span asp-validation-for="JenisBarangId" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Posisi Barang</label>
+            <input asp-for="PosisiBarang" class="form-control" />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Satuan</label>
+            <input asp-for="Satuan" class="form-control" />
+        </div>
+        <div class="col-12">
+            <div class="alert alert-warning small mb-0">
+                Stok saat ini: <strong>@Model.JumlahBarang</strong><br />
+                Perubahan stok hanya melalui transaksi Masuk/Keluar.
+            </div>
+        </div>
+        <div class="col-12 d-flex gap-2 mt-3 justify-content-end">
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    data-bs-dismiss="modal">
+                <i class="bi bi-x-lg"></i> Batal
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg"></i> Simpan
+            </button>
+        </div>
+    </div>
+</form>

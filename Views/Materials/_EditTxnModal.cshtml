@@ -1,0 +1,81 @@
+﻿@model UtilitiesHR.Models.TxnDto
+@{
+    Layout = null;
+    var m = ViewBag.Material as UtilitiesHR.Models.Material;
+}
+
+<form asp-action="EditTxn"
+      asp-route-id="@Model.Id"
+      id="ajax-form">
+    @Html.AntiForgeryToken()
+
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="MaterialId" />
+
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="alert alert-info small mb-2">
+                <strong>@m?.NamaBarang</strong> (@m?.KodeBarang)<br />
+                Stok saat ini:
+                <strong>@m?.JumlahBarang @m?.Satuan</strong><br />
+                <span>Mengubah transaksi ini akan menghitung ulang stok.</span>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-12">
+            <label asp-for="Tanggal" class="form-label">Tanggal</label>
+            <input asp-for="Tanggal"
+                   type="date"
+                   class="form-control"
+                   required />
+            <span asp-validation-for="Tanggal" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 col-12">
+            <label asp-for="Jenis" class="form-label">Jenis</label>
+            <select asp-for="Jenis"
+                    class="form-select"
+                    asp-items="Html.GetEnumSelectList<UtilitiesHR.Models.JenisTransaksi>()">
+            </select>
+            <span asp-validation-for="Jenis" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="Jumlah" class="form-label">Jumlah</label>
+            <input asp-for="Jumlah"
+                   type="number"
+                   min="1"
+                   class="form-control"
+                   required />
+            <span asp-validation-for="Jumlah" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="PenanggungJawab" class="form-label">Penanggung Jawab</label>
+            <input asp-for="PenanggungJawab"
+                   class="form-control" />
+            <span asp-validation-for="PenanggungJawab" class="text-danger"></span>
+        </div>
+
+        <div class="col-12">
+            <label asp-for="Keterangan" class="form-label">Keterangan</label>
+            <textarea asp-for="Keterangan"
+                      class="form-control"
+                      rows="2"></textarea>
+            <span asp-validation-for="Keterangan" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 d-flex gap-2 mt-3 justify-content-end">
+            <button type="button"
+                    class="btn btn-outline-secondary"
+                    data-bs-dismiss="modal">
+                <i class="bi bi-x-lg"></i> Batal
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg"></i> Simpan Perubahan
+            </button>
+        </div>
+    </div>
+</form>

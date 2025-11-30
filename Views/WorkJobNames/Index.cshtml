@@ -1,0 +1,423 @@
+﻿@model IEnumerable<UtilitiesHR.Models.WorkJobName>
+
+@{
+    ViewData["Title"] = "Master Nama Pekerjaan";
+    ViewData["Breadcrumb"] = "Master Nama Pekerjaan";
+    var msg = ViewBag.Message as string ?? "";
+    var err = ViewBag.Error as string ?? "";
+}
+
+<form id="afTokenForm" style="display:none">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.0.7/css/dataTables.bootstrap5.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.2/css/responsive.bootstrap5.css" />
+
+    <style>
+        /* ====== WRAPPER & TABLE (DISAMAKAN DENGAN PEKERJA) ====== */
+        .job-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 32px rgba(15,23,42,.06);
+            padding: 1.2rem 1.4rem;
+            background: #ffffff;
+        }
+
+        .job-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+
+            .job-table thead th {
+                background-color: #f3f6fb;
+                color: #1f2937;
+                font-weight: 600;
+                font-size: .8rem;
+                padding: .7rem 1rem;
+                border-bottom: 2px solid #e1e6f0 !important;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+
+            .job-table tbody td {
+                padding: .65rem 1rem;
+                border-bottom: 1px solid #eef1f7;
+                vertical-align: middle;
+                font-size: .8rem;
+            }
+
+            .job-table tbody tr:nth-child(odd) {
+                background-color: #ffffff;
+            }
+
+            .job-table tbody tr:nth-child(even) {
+                background-color: #f9fafc;
+            }
+
+            .job-table tbody tr:hover {
+                background-color: #edf4ff;
+            }
+
+        /* ====== HEADER ACTIONS (SAMA) ====== */
+        .feature-header-actions {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            flex-wrap: wrap;
+        }
+
+            .feature-header-actions .btn {
+                min-width: 40px;
+                border-radius: 999px;
+                padding-inline: 1.0rem;
+                font-size: .78rem;
+                font-weight: 500;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+                .feature-header-actions .btn i {
+                    font-size: .9rem;
+                }
+
+        .btn-pill-outline {
+            background: #ffffff;
+            border-radius: 999px;
+            border: 1px solid #d0d7e6;
+            color: #0f172a;
+        }
+
+            .btn-pill-outline i {
+                color: #0a5db0;
+            }
+
+            .btn-pill-outline:hover {
+                background: #f3f6fb;
+                border-color: #c3cce3;
+            }
+
+        .btn-pill-primary {
+            border-radius: 999px;
+            background: #0f7bd9;
+            border-color: #0f7bd9;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+        }
+
+            .btn-pill-primary:hover {
+                background: #0a5db0;
+                border-color: #0a5db0;
+            }
+
+            .btn-pill-primary i {
+                color: #ffffff;
+            }
+
+        /* ====== AKSI ICON BULAT (COPY DARI PEKERJA) ====== */
+        .table-actions {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: nowrap;
+            gap: .4rem;
+            white-space: nowrap;
+        }
+
+        .table-action-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            font-size: 14px;
+            padding: 0;
+            box-shadow: 0 2px 6px rgba(15,23,42,.12);
+            transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+        }
+
+            .table-action-btn i {
+                font-size: 15px;
+            }
+
+            .table-action-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 10px rgba(15,23,42,.16);
+            }
+
+        .table-action-edit {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .table-action-delete {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .table-action-edit:hover {
+            background: #fde68a;
+        }
+
+        .table-action-delete:hover {
+            background: #fecaca;
+        }
+
+        .table-action-btn:focus {
+            outline: 2px solid rgba(15,123,217,.35);
+            outline-offset: 1px;
+        }
+
+        @@media (max-width: 575.98px) {
+            .feature-header-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+                .feature-header-actions .btn span {
+                    display: none !important;
+                }
+
+                .feature-header-actions .btn {
+                    padding-inline: .6rem;
+                }
+
+            .table-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+}
+
+@section PageActions {
+    <div class="feature-header-actions">
+        <button type="button"
+                class="btn btn-pill-primary"
+                id="btn-add-job">
+            <i class="bi bi-plus-lg me-1"></i>
+            <span class="d-none d-md-inline">Tambah Nama Pekerjaan</span>
+        </button>
+
+        <div class="btn-group">
+            <button class="btn btn-pill-outline dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>
+                <span class="d-none d-md-inline">Template &amp; Export</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("TemplateImport")">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Download Template Import
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("ExportExcel")">
+                        <i class="bi bi-filetype-xlsx me-1"></i> Export (Excel)
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <button type="button"
+                id="btn-import"
+                class="btn btn-pill-outline">
+            <i class="bi bi-file-earmark-arrow-up me-1"></i>
+            <span class="d-none d-md-inline">Import</span>
+        </button>
+    </div>
+}
+
+<div class="job-table-wrapper">
+    <div class="table-responsive">
+        <table id="jobTable" class="table job-table align-middle w-100 nowrap">
+            <thead>
+                <tr>
+                    <th style="width: 60px;" class="text-center">No</th>
+                    <th>Nama Pekerjaan</th>
+                    <th style="width: 200px;">Tanggal Dibuat</th>
+                    <th style="width: 120px;" class="text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var no = 1;
+                    foreach (var x in Model)
+                    {
+                        <tr>
+                            <td class="text-center">@no</td>
+                            <td>@x.NamaPekerjaan</td>
+                            <td>@x.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy")</td>
+                            <td class="text-center text-nowrap">
+                                <div class="table-actions">
+                                    <button type="button"
+                                            class="table-action-btn table-action-edit btn-edit-job"
+                                            data-id="@x.Id"
+                                            title="Edit">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </button>
+
+                                    <form asp-action="Delete"
+                                          method="post"
+                                          class="d-inline form-delete-job">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@x.Id" />
+                                        <button type="submit"
+                                                class="table-action-btn table-action-delete"
+                                                title="Hapus">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        no++;
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal AJAX untuk Create / Edit / Import -->
+<div class="modal fade" id="ajax-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-md modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1px solid #e2e8f0;">
+                <h5 class="modal-title">Master Nama Pekerjaan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center text-muted py-4">
+                    <div class="spinner-border spinner-border-sm mb-2"></div>
+                    <div>Memuat...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.datatables.net/2.0.7/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.0.7/js/dataTables.bootstrap5.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/dataTables.responsive.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.2/js/responsive.bootstrap5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const $ = window.jQuery;
+
+            // ===== DataTables (layout & bahasa seragam) =====
+            try {
+                new DataTable('#jobTable', {
+                    responsive: true,
+                    pageLength: 25,
+                    order: [[1, 'asc']],
+                    lengthMenu: [10, 25, 50, 100],
+                    columnDefs: [
+                        { targets: 0, orderable: false, searchable: false },
+                        { targets: -1, orderable: false, searchable: false }
+                    ],
+                    language: {
+                        lengthMenu: "Show _MENU_ entries",
+                        search: "Search:",
+                        info: "Showing _START_ to _END_ of _TOTAL_ entries",
+                        infoEmpty: "Showing 0 to 0 of 0 entries",
+                        zeroRecords: "No matching records found",
+                        paginate: {
+                            first: "<<",
+                            last: ">>",
+                            next: ">",
+                            previous: "<"
+                        }
+                    },
+                    dom:
+                        "<'row g-2 mb-2'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                        "<'row'<'col-sm-12'tr>>" +
+                        "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>"
+                });
+            } catch (e) {
+                console.error('Error init DataTable:', e);
+            }
+
+            const modalEl = document.getElementById('ajax-modal');
+            const bsModal = new bootstrap.Modal(modalEl);
+
+            function openModal(url, title) {
+                $('#ajax-modal .modal-title').text(title || 'Master Nama Pekerjaan');
+                $('#ajax-modal .modal-body').html(
+                    '<div class="text-center py-4 text-muted">' +
+                    '<div class="spinner-border spinner-border-sm mb-2"></div>' +
+                    '<div>Memuat...</div>' +
+                    '</div>'
+                );
+                bsModal.show();
+
+                $.get(url, function (html) {
+                    $('#ajax-modal .modal-body').html(html);
+                });
+            }
+
+            // Tambah
+            $('#btn-add-job').on('click', function () {
+                openModal('@Url.Action("Create")', "Tambah Nama Pekerjaan");
+            });
+
+            // Edit
+            $(document).on('click', '.btn-edit-job', function () {
+                const id = $(this).data('id');
+                openModal('@Url.Action("Edit")?id=' + id, "Edit Nama Pekerjaan");
+            });
+
+            // Import
+            $('#btn-import').on('click', function () {
+                openModal('@Url.Action("ImportDialog")', "Import Master Nama Pekerjaan");
+            });
+
+            // ===== SweetAlert HAPUS (DISAMAKAN DENGAN PEKERJA) =====
+            $(document).on('submit', '.form-delete-job', function (e) {
+                e.preventDefault();
+                const form = this;
+
+                Swal.fire({
+                    title: 'Hapus nama pekerjaan?',
+                    text: 'Data yang sudah dihapus tidak dapat dikembalikan.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, hapus',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#dc3545',   // merah sama seperti Pekerja
+                    cancelButtonColor: '#6c757d',   // abu-abu sama
+                    reverseButtons: false,
+                    focusCancel: true
+                }).then(function (result) {
+                    if (result.isConfirmed) {
+                        form.submit();   // biarkan controller yang redirect seperti biasa
+                    }
+                });
+            });
+
+            // ===== Notifikasi TempData (tanpa ubah styling global) =====
+            const msg = '@msg'.trim();
+            const err = '@err'.trim();
+
+            if (msg) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: msg
+                });
+            } else if (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: err
+                });
+            }
+        });
+    </script>
+}

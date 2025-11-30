@@ -1,0 +1,18 @@
+﻿@model UtilitiesHR.Models.Sertifikasi
+@{
+    ViewData["Title"] = "Hapus Sertifikasi";
+}
+<h3>Hapus Sertifikasi</h3>
+<dl class="row">
+    <dt class="col-sm-2">Pekerja</dt>
+    <dd class="col-sm-10">@Model.Employee?.NamaLengkap (@Model.Employee?.NopegPersero)</dd>
+    <dt class="col-sm-2">Sertifikasi</dt>
+    <dd class="col-sm-10">@(Model.MasterSertifikasi?.Nama ?? Model.NamaSertifikasi)</dd>
+    <dt class="col-sm-2">Berlaku</dt>
+    <dd class="col-sm-10">@Model.BerlakuDari:yyyy-MM-dd - @Model.BerlakuSampai:yyyy-MM-dd (@(Model.IsExpired ? "Expired" : "Aktif"))</dd>
+</dl>
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button class="btn btn-danger">Hapus</button>
+    <a class="btn btn-outline-secondary" href="/Sertifikasis">Batal</a>
+</form>

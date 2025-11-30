@@ -1,0 +1,235 @@
+﻿@model UtilitiesHR.Controllers.ProfileController.ProfileVM
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Profil Saya";
+
+    // Kumpulkan semua error ModelState (kalau ada) jadi satu string untuk SweetAlert
+    var allErrors = "";
+    if (!ViewData.ModelState.IsValid)
+    {
+        allErrors = string.Join("\\n",
+            ViewData.ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage));
+    }
+}
+
+<h3 class="mb-3">Profil Saya</h3>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form asp-action="Index" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="row g-3">
+                <!-- =================== DATA PROFIL =================== -->
+                <div class="col-12">
+                    <h5 class="mb-2">Data Profil</h5>
+                    <hr class="mt-0" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Nama Lengkap</label>
+                    <input asp-for="FullName" class="form-control" />
+                    <span asp-validation-for="FullName" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Email (login)</label>
+                    <input asp-for="Email" class="form-control" readonly />
+                </div>
+
+                <!-- =================== UBAH PASSWORD =================== -->
+                <div class="col-12 mt-3">
+                    <h5 class="mb-2">Ubah Password</h5>
+                    <small class="text-muted">
+                        Kosongkan semua kolom password jika Anda tidak ingin mengubah password.<br />
+                        Untuk mengubah password, isi <strong>Password Lama</strong>,
+                        <strong>Password Baru</strong>, dan
+                        <strong>Konfirmasi Password Baru</strong>.
+                    </small>
+                    <hr class="mt-2" />
+                </div>
+
+                <!-- Password Lama -->
+                <div class="col-md-4">
+                    <label class="form-label">Password Lama</label>
+                    <div class="position-relative">
+                        <input asp-for="OldPassword"
+                               id="OldPassword"
+                               class="form-control pe-5"
+                               type="password"
+                               autocomplete="current-password" />
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 toggle-password"
+                                data-target="OldPassword"
+                                aria-label="Tampilkan / sembunyikan password lama">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="OldPassword" class="text-danger"></span>
+                </div>
+
+                <!-- Password Baru -->
+                <div class="col-md-4">
+                    <label class="form-label">Password Baru</label>
+                    <div class="position-relative">
+                        <input asp-for="NewPassword"
+                               id="NewPassword"
+                               class="form-control pe-5"
+                               type="password"
+                               autocomplete="new-password" />
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 toggle-password"
+                                data-target="NewPassword"
+                                aria-label="Tampilkan / sembunyikan password baru">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="NewPassword" class="text-danger"></span>
+                </div>
+
+                <!-- Konfirmasi Password Baru -->
+                <div class="col-md-4">
+                    <label class="form-label">Konfirmasi Password Baru</label>
+                    <div class="position-relative">
+                        <input asp-for="ConfirmPassword"
+                               id="ConfirmPassword"
+                               class="form-control pe-5"
+                               type="password"
+                               autocomplete="new-password" />
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2 toggle-password"
+                                data-target="ConfirmPassword"
+                                aria-label="Tampilkan / sembunyikan konfirmasi password">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <div class="col-12 mt-3 text-end">
+                    <button type="submit" class="btn btn-primary" id="btnSave">
+                        <i class="bi bi-save"></i> Simpan
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        // ======== SweetAlert untuk pesan sukses dari TempData ========
+        @if (TempData["ProfileMessage"] != null)
+        {
+                var successMsg = JsonSerializer.Serialize(TempData["ProfileMessage"]!.ToString());
+            <text>
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: @successMsg
+                });
+            </text>
+        }
+
+        // ======== SweetAlert untuk error dari ModelState ========
+        @if (!string.IsNullOrEmpty(allErrors))
+        {
+                var errorMsg = JsonSerializer.Serialize(allErrors);
+            <text>
+                const allErrorsText = @errorMsg;
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Terjadi Kesalahan',
+                    html: allErrorsText.replace(/\n/g, '<br/>')
+                });
+            </text>
+        }
+
+        // ======== Validasi tambahan di sisi client (password) ========
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('form');
+            if (!form) return;
+
+            // Toggle show/hide password untuk semua tombol dengan class .toggle-password
+            document.querySelectorAll('.toggle-password').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const targetId = this.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    if (!input) return;
+
+                    const icon = this.querySelector('i');
+
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        if (icon) {
+                            icon.classList.remove('bi-eye');
+                            icon.classList.add('bi-eye-slash');
+                        }
+                    } else {
+                        input.type = 'password';
+                        if (icon) {
+                            icon.classList.remove('bi-eye-slash');
+                            icon.classList.add('bi-eye');
+                        }
+                    }
+                });
+            });
+
+            // Validasi sebelum submit
+            form.addEventListener('submit', function (e) {
+                const oldPwd = document.getElementById('OldPassword');
+                const newPwd = document.getElementById('NewPassword');
+                const confirmPwd = document.getElementById('ConfirmPassword');
+
+                const oldVal = oldPwd ? oldPwd.value.trim() : '';
+                const newVal = newPwd ? newPwd.value.trim() : '';
+                const confVal = confirmPwd ? confirmPwd.value.trim() : '';
+
+                const wantsChange = oldVal.length > 0 || newVal.length > 0 || confVal.length > 0;
+
+                if (wantsChange) {
+                    // semua wajib diisi
+                    if (!oldVal || !newVal || !confVal) {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Validasi Password',
+                            text: 'Untuk mengubah password, isi Password Lama, Password Baru dan Konfirmasi Password Baru.'
+                        });
+                        return;
+                    }
+
+                    // password baru = konfirmasi
+                    if (newVal !== confVal) {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Validasi Password',
+                            text: 'Konfirmasi password baru tidak sama.'
+                        });
+                        return;
+                    }
+
+                    // password baru tidak boleh sama dengan lama
+                    if (newVal === oldVal) {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Validasi Password',
+                            text: 'Password baru tidak boleh sama dengan password lama.'
+                        });
+                        return;
+                    }
+                }
+            });
+        });
+    </script>
+}

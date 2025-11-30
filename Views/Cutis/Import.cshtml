@@ -1,0 +1,75 @@
+﻿@{
+    Layout = null;
+}
+
+<!-- STYLE MODAL CUTI -->
+<style>
+    .cuti-modal-stack {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 140px);
+    }
+
+    .cuti-modal-scroll {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding-right: 4px;
+        padding-bottom: 0.25rem;
+    }
+
+    .cuti-modal-actions {
+        position: sticky;
+        bottom: 0;
+        background: var(--bg);
+        border-top: 1px solid var(--line);
+        padding-top: 0.75rem;
+        padding-bottom: calc(env(safe-area-inset-bottom, 8px) + 0.25rem);
+        margin-top: 0.5rem;
+        z-index: 1;
+    }
+
+    @@media (max-width: 575.98px) {
+        .cuti-modal-stack {
+            max-height: calc(100vh - 110px);
+        }
+    }
+</style>
+
+<div class="cuti-modal-stack">
+    <div class="cuti-modal-scroll">
+        <form id="import-form" asp-action="Import" asp-controller="Cutis" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <p class="small text-muted mb-1">
+                    Silakan download template terlebih dahulu, isi data, lalu upload kembali.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    <a href="@Url.Action("DownloadTemplateExcel")" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-file-earmark-excel"></i> Template Excel
+                    </a>
+                    <a href="@Url.Action("DownloadTemplateCsv")" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-filetype-csv"></i> Template CSV
+                    </a>
+                </div>
+                <ul class="small text-muted mb-0">
+                    <li>Kolom <strong>Nama</strong> dan <strong>Nopeg</strong> wajib sama persis dengan data di master Pekerja.</li>
+                    <li>Format tanggal: <code>dd/MM/yyyy</code> atau <code>yyyy-MM-dd</code>.</li>
+                    <li>File yang didukung: <code>.xlsx</code> dan <code>.csv</code>.</li>
+                </ul>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Pilih file import</label>
+                <input type="file" name="file" class="form-control" accept=".xlsx,.csv" required />
+            </div>
+        </form>
+    </div>
+
+    <div class="cuti-modal-actions d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="submit" class="btn btn-primary" form="import-form">
+            <i class="bi bi-upload"></i> Import
+        </button>
+    </div>
+</div>

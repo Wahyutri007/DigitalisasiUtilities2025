@@ -1,0 +1,97 @@
+﻿@model UtilitiesHR.Controllers.UsersController.CreateUserVM
+
+@{
+    ViewData["Title"] = "Register Akun";
+}
+
+<h3 class="mb-3">Register Akun Baru</h3>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+    <div class="mb-3">
+        <label class="form-label">Pilih Pekerja (opsional)</label>
+        <select asp-for="EmployeeId" class="form-select" asp-items="ViewBag.Employees" id="EmployeeId">
+            <option value="">— Tidak terkait pegawai —</option>
+        </select>
+
+        <div id="employee-meta" class="small text-muted mt-1" style="display:none;">
+            Nopeg: <span id="emp-nopeg"></span><br />
+            Email default: <span id="emp-email"></span>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Nama Lengkap</label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Email (login)</label>
+        <input asp-for="Email" class="form-control" type="email" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <p class="small text-muted">
+        Password awal akan otomatis diset ke: <strong>Pertamina@2025</strong>.<br />
+        Pengguna dapat mengganti password setelah login di menu Profil.
+    </p>
+
+    <button class="btn btn-primary" type="submit">
+        <i class="bi bi-save"></i> Simpan
+    </button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Kembali</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            // kalau mau pakai select2:
+            $('#EmployeeId').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+
+            $('#EmployeeId').on('change', function () {
+                const id = $(this).val();
+                const $meta = $('#employee-meta');
+                if (!id) {
+                    $meta.hide();
+                    $('#emp-nopeg').text('');
+                    $('#emp-email').text('');
+                    return;
+                }
+
+                $.getJSON('/Employees/GetBasicInfo', { id: id })
+                    .done(function (res) {
+                        if (!res) return;
+
+                        const nama = res.nama || res.Nama || '';
+                        const nopeg = res.nopeg || res.Nopeg || '';
+                        const email = res.email || res.Email || '';
+
+                        // isi otomatis kalau masih kosong
+                        const $nameInput = $('input[name="FullName"]');
+                        const $emailInput = $('input[name="Email"]');
+
+                        if (!$nameInput.val() && nama) {
+                            $nameInput.val(nama);
+                        }
+                        if (!$emailInput.val() && email) {
+                            $emailInput.val(email);
+                        }
+
+                        $('#emp-nopeg').text(nopeg || '-');
+                        $('#emp-email').text(email || '—');
+                        $meta.show();
+                    })
+                    .fail(function () {
+                        $('#employee-meta').hide();
+                    });
+            });
+        });
+    </script>
+}

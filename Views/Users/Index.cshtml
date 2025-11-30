@@ -1,0 +1,415 @@
+﻿@model IEnumerable<UtilitiesHR.Models.ApplicationUser>
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+@{
+    ViewData["Title"] = "Manajemen Akun";
+    ViewData["Breadcrumb"] = "Manajemen Akun";
+
+    var q = Context.Request.Query["q"].ToString();
+    var employeeId = Context.Request.Query["employeeId"].ToString();
+    var msg = TempData["UserMessage"] as string;
+}
+
+@section Styles {
+    <style>
+        /* ===== HEADER ACTION BUTTONS (SEJAJAR BREADCRUMB, TEMA MATERIAL) ===== */
+        .user-actions .btn {
+            min-width: 38px;
+        }
+
+            .user-actions .btn i {
+                font-size: 1rem;
+            }
+
+        .btn-pill-outline {
+            background: #ffffff;
+            border-radius: 999px;
+            border: 1px solid #d0d7e6;
+            color: #0f172a;
+        }
+
+            .btn-pill-outline i {
+                color: #0a5db0;
+            }
+
+            .btn-pill-outline:hover {
+                background: #f3f6fb;
+                border-color: #c3cce3;
+            }
+
+        .btn-pill-primary {
+            border-radius: 999px;
+            background: #0f7bd9;
+            border-color: #0f7bd9;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+        }
+
+            .btn-pill-primary:hover {
+                background: #0a5db0;
+                border-color: #0a5db0;
+            }
+
+            .btn-pill-primary i {
+                color: #ffffff;
+            }
+
+        @@media (max-width: 575.98px) {
+            .user-actions .btn span {
+                display: none !important; /* HP: icon saja */
+            }
+
+            .user-actions .btn {
+                padding-inline: .55rem;
+            }
+        }
+
+        /* ===== TABLE CARD WRAPPER (GAYA MATERIAL) ===== */
+        .user-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 32px rgba(15,23,42,.06);
+            padding: 1.2rem 1.4rem;
+            background: #ffffff;
+        }
+
+        .user-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+
+            .user-table thead th {
+                background-color: #f3f6fb;
+                color: #1f2937;
+                font-weight: 600;
+                font-size: .8rem;
+                padding: .7rem 1rem;
+                border-bottom: 2px solid #e1e6f0 !important;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+
+            .user-table tbody td {
+                padding: .65rem 1rem;
+                border-bottom: 1px solid #eef1f7;
+                vertical-align: middle;
+                font-size: .8rem;
+            }
+
+            .user-table tbody tr:nth-child(odd) {
+                background-color: #ffffff;
+            }
+
+            .user-table tbody tr:nth-child(even) {
+                background-color: #f9fafc;
+            }
+
+            .user-table tbody tr:hover {
+                background-color: #edf4ff;
+            }
+
+        /* ===== AKSI BUTTON DI TABEL ===== */
+        .user-table-actions {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: .35rem;
+            white-space: nowrap;
+        }
+
+        .user-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            font-size: 14px;
+            padding: 0;
+            box-shadow: 0 2px 6px rgba(15,23,42,.12);
+            transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+            color: #111827;
+        }
+
+            .user-action-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 10px rgba(15,23,42,.16);
+            }
+
+        .user-action-edit {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+            .user-action-edit:hover {
+                background: #fde68a;
+            }
+
+        .user-action-reset {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+            .user-action-reset:hover {
+                background: #bae6fd;
+            }
+
+        .user-action-delete {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+            .user-action-delete:hover {
+                background: #fecaca;
+            }
+
+        .user-action-btn i {
+            pointer-events: none;
+        }
+    </style>
+}
+
+@section PageActions {
+    <div class="user-actions d-flex flex-wrap gap-2 justify-content-end">
+        <div class="btn-group">
+            <button class="btn btn-pill-outline dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-download me-1"></i>
+                <span class="d-none d-md-inline">Export</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li class="dropdown-header small text-muted">Export Data</li>
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("ExportExcel", new { q, employeeId })">
+                        <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="@Url.Action("ExportCsv", new { q, employeeId })">
+                        <i class="bi bi-filetype-csv me-1"></i>CSV
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(msg))
+{
+    <div class="alert alert-success py-2 mb-3 shadow-sm">
+        @msg
+    </div>
+}
+
+<div class="user-table-wrapper">
+    <div class="table-responsive">
+        <table id="tbl-users" class="table user-table align-middle" style="width:100%">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:20px;">#</th>
+                    <th>Nama</th>
+                    <th>Email</th>
+                    <th>Nopeg</th>
+                    <th class="text-center">EmployeeId</th>
+                    <th class="text-center" style="width:110px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    <tr>
+                        <td class="text-center"></td> @* nomor akan diisi oleh DataTables *@
+                        <td>@(u.FullName ?? u.Employee?.NamaLengkap ?? "-")</td>
+                        <td>@u.Email</td>
+                        <td>@(u.Employee?.NopegPersero ?? "-")</td>
+                        <td class="text-center">@u.EmployeeId</td>
+                        <td class="text-center">
+                            <div class="user-table-actions">
+                                <a href="@Url.Action("Edit", "Users", new { id = u.Id })"
+                                   class="user-action-btn user-action-edit btn-edit-user"
+                                   title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+
+                                <form asp-action="ResetPassword" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <button type="button"
+                                            class="user-action-btn user-action-reset btn-reset"
+                                            title="Reset Password"
+                                            data-email="@u.Email">
+                                        <i class="bi bi-arrow-counterclockwise"></i>
+                                    </button>
+                                </form>
+
+                                <form asp-action="Delete" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@u.Id" />
+                                    <button type="button"
+                                            class="user-action-btn user-action-delete btn-delete"
+                                            title="Hapus"
+                                            data-email="@u.Email">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            const $ajaxModal = $('#ajax-modal');
+            const $modalBody = $ajaxModal.find('.modal-body');
+            const $modalTitle = $ajaxModal.find('.modal-title');
+
+            const params = new URLSearchParams(window.location.search);
+            const empId = params.get('employeeId');
+            if (empId) {
+                $('select[name="employeeId"]').val(empId);
+            }
+
+            $('select[name="employeeId"]').select2({
+                theme: 'bootstrap-5'
+            });
+
+            const table = $('#tbl-users').DataTable({
+                responsive: true, // responsive biasa (tanpa dtr-control)
+                columnDefs: [
+                    {
+                        targets: 0,              // kolom nomor
+                        className: 'text-center',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        targets: 1, // Nama
+                        className: 'all'
+                    },
+                    {
+                        targets: 5, // Aksi
+                        className: 'all text-center',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        targets: [2, 3, 4], // Email, Nopeg, EmployeeId
+                        className: 'min-tablet-p'
+                    }
+                ],
+                order: [[1, 'asc']],
+                pageLength: 25,
+                dom:
+                    "<'row g-2 mb-3'<'col-6 col-md-4'l><'col-6 col-md-4 offset-md-4'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
+                language: {
+                    search: "Cari:",
+                    lengthMenu: "_MENU_ baris",
+                    info: "_START_–_END_ dari _TOTAL_",
+                    infoEmpty: "Tidak ada data",
+                    zeroRecords: "Tidak ditemukan",
+                    paginate: { first: "<<", last: ">>", next: ">", previous: "<" }
+                },
+                // isi nomor urut setiap draw
+                drawCallback: function () {
+                    const api = this.api();
+                    api.column(0, { search: 'applied', order: 'applied' })
+                        .nodes()
+                        .each(function (cell, i) {
+                            cell.innerHTML = i + 1;
+                        });
+                }
+            });
+
+            // Buka modal EDIT AKUN
+            $('#tbl-users').on('click', '.btn-edit-user', function (e) {
+                e.preventDefault();
+
+                const url = $(this).attr('href');
+
+                $modalTitle.text('Edit Akun');
+                $modalBody.html("<div class='text-center py-4 text-muted small'>Memuat formulir…</div>");
+
+                $modalBody.load(url, function () {
+                    $ajaxModal.modal('show');
+                });
+            });
+
+            // ========= RESET PASSWORD (SweetAlert) =========
+            $('#tbl-users').on('click', '.btn-reset', function () {
+                const $form = $(this).closest('form');
+                const email = $(this).data('email') || '(tanpa email)';
+
+                Swal.fire({
+                    title: 'Reset password?',
+                    text: `Password akun ${email} akan direset ke Pertamina@2025. User akan diminta mengganti password saat login.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, reset',
+                    cancelButtonText: 'Batal'
+                }).then(res => {
+                    if (!res.isConfirmed) return;
+
+                    $.ajax({
+                        url: $form.attr('action'),
+                        type: 'POST',
+                        data: $form.serialize(),
+                        success: function (r) {
+                            if (r && r.success) {
+                                Swal.fire('Berhasil', r.message, 'success');
+                            } else {
+                                Swal.fire('Gagal', r && r.message ? r.message : 'Gagal reset password.', 'error');
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Error', 'Terjadi kesalahan pada server.', 'error');
+                        }
+                    });
+                });
+            });
+
+            // ========= DELETE USER =========
+            $('#tbl-users').on('click', '.btn-delete', function () {
+                const $form = $(this).closest('form');
+                const email = $(this).data('email') || '(tanpa email)';
+
+                Swal.fire({
+                    title: 'Hapus akun?',
+                    text: `Akun dengan email ${email} akan dihapus. Pastikan data pekerja yang terkait sudah dihapus terlebih dahulu.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, hapus',
+                    cancelButtonText: 'Batal'
+                }).then(res => {
+                    if (!res.isConfirmed) return;
+
+                    $.ajax({
+                        url: $form.attr('action'),
+                        type: 'POST',
+                        data: $form.serialize(),
+                        success: function (r) {
+                            if (r && r.success) {
+                                Swal.fire('Berhasil', r.message || 'Akun berhasil dihapus.', 'success')
+                                    .then(() => window.location.reload());
+                            } else if (r && r.requireDeleteEmployee) {
+                                Swal.fire('Tidak bisa dihapus', r.message, 'warning');
+                            } else {
+                                Swal.fire('Gagal', r && r.message ? r.message : 'Gagal menghapus akun.', 'error');
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Error', 'Terjadi kesalahan pada server.', 'error');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,473 @@
+﻿@model UtilitiesHR.Controllers.CutisController.CutiDetailsVM
+@{
+    ViewData["Title"] = "Detail Cuti";
+    ViewData["Breadcrumb"] = "Cuti Pekerja";
+
+    var canManageCuti = User.IsInRole("Admin")
+                      || User.IsInRole("SuperAdmin")
+                      || User.IsInRole("Supervisor");
+}
+
+@section Styles {
+    <style>
+        /* ====== BUTTON HEADER (KANAN BREADCRUMB) ====== */
+        .cuti-detail-actions .btn {
+            min-width: 38px;
+        }
+
+            .cuti-detail-actions .btn i {
+                font-size: 1rem;
+            }
+
+        .btn-pill-outline {
+            background: #ffffff;
+            border-radius: 999px;
+            border: 1px solid #d0d7e6;
+            color: #0f172a;
+        }
+
+            .btn-pill-outline i {
+                color: #0a5db0;
+            }
+
+            .btn-pill-outline:hover {
+                background: #f3f6fb;
+                border-color: #c3cce3;
+            }
+
+        .btn-pill-primary {
+            border-radius: 999px;
+            background: #0f7bd9;
+            border-color: #0f7bd9;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 123, 217, .35);
+        }
+
+            .btn-pill-primary:hover {
+                background: #0a5db0;
+                border-color: #0a5db0;
+            }
+
+            .btn-pill-primary i {
+                color: #ffffff;
+            }
+
+        @@media (max-width: 575.98px) {
+            .cuti-detail-actions .btn span
+
+        {
+            display: none !important; /* di HP icon saja */
+        }
+
+        .cuti-detail-actions .btn {
+            padding-inline: .55rem;
+        }
+
+        }
+
+        /* ====== HEADER INFO PEKERJA ====== */
+        .cuti-emp-header {
+            padding: .9rem 1.1rem;
+            border-radius: 14px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 8px 26px rgba(15,23,42,.06);
+        }
+
+        .cuti-emp-name {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .cuti-emp-meta {
+            font-size: .8rem;
+            color: #64748b;
+        }
+
+        /* ====== STAT CARD KUOTA / TERPAKAI / SISA ====== */
+        .cuti-stat-row {
+            margin-top: 1rem;
+            margin-bottom: 1.1rem;
+        }
+
+        .cuti-stat-card {
+            position: relative;
+            border-radius: 16px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 8px 24px rgba(15,23,42,.06);
+            padding: .9rem 1.1rem;
+            min-height: 96px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .cuti-stat-label {
+            font-size: .78rem;
+            font-weight: 600;
+            letter-spacing: .03em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: .25rem;
+        }
+
+        .cuti-stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1d4ed8;
+        }
+
+        .cuti-stat-caption {
+            font-size: .75rem;
+            color: #94a3b8;
+            margin-top: .1rem;
+        }
+
+        .cuti-stat-icon {
+            position: absolute;
+            top: .7rem;
+            right: .9rem;
+            width: 30px;
+            height: 30px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 16px rgba(15,23,42,.12);
+        }
+
+            .cuti-stat-icon .bi {
+                font-size: 1rem;
+            }
+
+        .cuti-stat-kuota .cuti-stat-icon {
+            background: #e0ecff;
+            color: #1d4ed8;
+        }
+
+        .cuti-stat-terpakai .cuti-stat-icon {
+            background: #fef3c7;
+            color: #f59e0b;
+        }
+
+        .cuti-stat-sisa .cuti-stat-icon {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        @@media (max-width: 575.98px) {
+            .cuti-stat-card
+
+        {
+            padding: .8rem .95rem;
+            min-height: 90px;
+        }
+
+        }
+
+        /* ====== WRAPPER TABEL ====== */
+        .cuti-table-wrapper {
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            box-shadow: 0 10px 32px rgba(15,23,42,.06);
+            padding: 1.2rem 1.4rem;
+            background: #ffffff;
+        }
+
+        .cuti-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 0;
+        }
+
+            .cuti-table thead th {
+                background-color: #f3f6fb;
+                color: #1f2937;
+                font-weight: 600;
+                font-size: .8rem;
+                padding: .7rem 1rem;
+                border-bottom: 2px solid #e1e6f0 !important;
+                vertical-align: middle;
+                white-space: nowrap;
+            }
+
+            .cuti-table tbody td {
+                padding: .65rem 1rem;
+                border-bottom: 1px solid #eef1f7;
+                vertical-align: middle;
+                font-size: .8rem;
+            }
+
+            .cuti-table tbody tr:nth-child(odd) {
+                background-color: #ffffff;
+            }
+
+            .cuti-table tbody tr:nth-child(even) {
+                background-color: #f9fafc;
+            }
+
+            .cuti-table tbody tr:hover {
+                background-color: #edf4ff;
+            }
+    </style>
+}
+
+@* ====== TOMBOL AKSI DI HEADER GLOBAL (KANAN BREADCRUMB) ====== *@
+@section PageActions {
+    <div class="cuti-detail-actions d-flex flex-wrap justify-content-end gap-2">
+        <a asp-action="Index" class="btn btn-pill-outline">
+            <i class="bi bi-arrow-left me-1"></i>
+            <span class="d-none d-md-inline">Kembali</span>
+        </a>
+
+        @if (canManageCuti)
+        {
+            <button class="btn btn-pill-primary" id="btn-create-modal-detail" data-employee-id="@Model.Emp.Id">
+                <i class="bi bi-plus-lg me-1"></i>
+                <span class="d-none d-md-inline">Input Cuti</span>
+            </button>
+        }
+    </div>
+}
+
+@* ====== ISI HALAMAN SESUDAH HEADER GLOBAL ====== *@
+
+<!-- Info singkat pekerja -->
+<div class="cuti-emp-header mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div>
+            <div class="cuti-emp-name">@Model.Emp.NamaLengkap</div>
+            <div class="cuti-emp-meta">
+                Nopeg: @(Model.Emp.NopegPersero ?? "-")
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Kartu kuota / dipakai / sisa -->
+<div class="row g-3 cuti-stat-row">
+    <div class="col-lg-4 col-md-6">
+        <div class="cuti-stat-card cuti-stat-kuota">
+            <div class="cuti-stat-icon">
+                <i class="bi bi-calendar-event-fill"></i>
+            </div>
+            <div class="cuti-stat-label">Kuota Tahun @DateTime.Today.Year</div>
+            <div class="cuti-stat-value">@Model.Kuota</div>
+            <div class="cuti-stat-caption">Total hak cuti tahun berjalan</div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6">
+        <div class="cuti-stat-card cuti-stat-terpakai">
+            <div class="cuti-stat-icon">
+                <i class="bi bi-arrow-up-right-circle-fill"></i>
+            </div>
+            <div class="cuti-stat-label">Terpakai</div>
+            <div class="cuti-stat-value">@Model.Terpakai</div>
+            <div class="cuti-stat-caption">Jumlah hari cuti yang sudah diambil</div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-12">
+        <div class="cuti-stat-card cuti-stat-sisa">
+            <div class="cuti-stat-icon">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="cuti-stat-label">Sisa</div>
+            <div class="cuti-stat-value">@Model.Sisa</div>
+            <div class="cuti-stat-caption">Sisa hak cuti tahun ini</div>
+        </div>
+    </div>
+</div>
+
+<!-- Token tersembunyi untuk DELETE -->
+<form id="cuti-token-form" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+<!-- Tabel detail cuti -->
+<div class="cuti-table-wrapper">
+    <div class="table-responsive">
+        <table id="tbl-detail" class="table cuti-table align-middle w-100">
+            <thead>
+                <tr>
+                    <th class="text-center" style="width:20px;">#</th>
+                    <th>Mulai</th>
+                    <th>Selesai</th>
+                    <th class="text-center">Hari</th>
+                    <th>Tujuan</th>
+                    <th>Keterangan</th>
+                    @if (canManageCuti)
+                    {
+                        <th class="text-center" data-priority="1" style="width:85px;">Aksi</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td class="text-center"></td>
+                        <td>@item.TanggalMulai.ToString("dd/MM/yyyy")</td>
+                        <td>@item.TanggalSelesai.ToString("dd/MM/yyyy")</td>
+                        <td class="text-center">@item.JumlahHari</td>
+                        <td>@item.Tujuan</td>
+                        <td>@item.Keterangan</td>
+
+                        @if (canManageCuti)
+                        {
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-1">
+                                    <button class="btn btn-sm btn-outline-warning btn-edit" data-id="@item.Id" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="@item.Id" title="Hapus">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            const $ajaxModal = $('#ajax-modal');
+            const $modalBody = $ajaxModal.find('.modal-body');
+            const $modalTitle = $ajaxModal.find('.modal-title');
+            const token = $('#cuti-token-form').find('input[name="__RequestVerificationToken"]').val();
+
+            // ====== DataTables setup ======
+            const columnDefs = [
+                { targets: 0, orderable: false, searchable: false } // kolom nomor
+            ];
+
+            // kolom aksi (kalau ada)
+            @if (canManageCuti)
+            {
+                    @:columnDefs.push({ targets: -1, orderable: false, searchable: false });
+            }
+
+            const tableDetail = $('#tbl-detail').DataTable({
+                responsive: true,
+                dom:
+                    "<'row g-2 mb-2'<'col-auto'l><'col'f>>" +
+                    "<'row'<'col-sm-12'tr>>" +
+                    "<'row mt-1'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7 d-flex justify-content-end'p>>",
+                order: [[1, 'desc']],
+                pageLength: 25,
+                lengthMenu: [10, 25, 50, 100],
+                language: {
+                    search: "Cari:",
+                    lengthMenu: "_MENU_ baris",
+                    info: "_START_–_END_ dari _TOTAL_",
+                    infoEmpty: "Tidak ada data",
+                    zeroRecords: "Tidak ditemukan",
+                    paginate: { first: "<<", last: ">>", next: ">", previous: "<" }
+                },
+                columnDefs: columnDefs
+            });
+
+            tableDetail.on('draw.dt', function () {
+                const info = tableDetail.page.info();
+                tableDetail.column(0, { search: 'applied', order: 'applied' }).nodes()
+                    .each(function (cell, i) {
+                        cell.innerHTML = info.start + i + 1;
+                    });
+            }).draw();
+
+            function resetModalLayout() {
+                $modalBody.removeClass().addClass('modal-body');
+            }
+
+            // ====== CREATE dari halaman detail ======
+            $('#btn-create-modal-detail').on('click', function () {
+                const empId = $(this).data('employee-id');
+                resetModalLayout();
+                $modalTitle.text('Input Data Cuti');
+                $modalBody.load('@Url.Action("Create")?employeeId=' + empId, function () {
+                    $ajaxModal.modal('show');
+                });
+            });
+
+            // ====== EDIT ======
+            $('#tbl-detail').on('click', '.btn-edit', function () {
+                const cutiId = $(this).data('id');
+                resetModalLayout();
+                $modalTitle.text('Edit Data Cuti');
+                $modalBody.load('@Url.Action("Edit")/' + cutiId, function () {
+                    $ajaxModal.modal('show');
+                });
+            });
+
+            // ====== SUBMIT AJAX (Create / Edit) ======
+            $('body').on('submit', '#ajax-form', function (e) {
+                e.preventDefault();
+                const $form = $(this);
+
+                $.ajax({
+                    url: $form.attr('action'),
+                    type: 'POST',
+                    data: $form.serialize(),
+                    success: function (response) {
+                        if (response.success) {
+                            $ajaxModal.modal('hide');
+                            Swal.fire('Berhasil', response.message, 'success')
+                                .then(() => window.location.reload());
+                        } else {
+                            let errorMsg = (response.message || 'Gagal menyimpan.') +
+                                "\n<ul class='text-start mt-2'>";
+                            (response.errors || []).forEach(err => {
+                                errorMsg += `<li>${err}</li>`;
+                            });
+                            errorMsg += "</ul>";
+                            Swal.fire({ title: 'Gagal', html: errorMsg, icon: 'error' });
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                    }
+                });
+            });
+
+            // ====== DELETE ======
+            $('#tbl-detail').on('click', '.btn-delete', function () {
+                const cutiId = $(this).data('id');
+
+                Swal.fire({
+                    title: 'Anda yakin?',
+                    text: "Data cuti ini akan dihapus permanen.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonText: 'Batal',
+                    confirmButtonText: 'Ya, hapus!'
+                }).then((result) => {
+                    if (!result.isConfirmed) return;
+
+                    $.ajax({
+                        url: '@Url.Action("Delete")/' + cutiId,
+                        type: 'POST',
+                        data: { "__RequestVerificationToken": token },
+                        success: function (response) {
+                            if (response.success) {
+                                Swal.fire('Dihapus!', response.message, 'success')
+                                    .then(() => window.location.reload());
+                            } else {
+                                Swal.fire('Gagal!', response.message || 'Gagal menghapus data.', 'error');
+                            }
+                        },
+                        error: function () {
+                            Swal.fire('Error', 'Terjadi kesalahan server.', 'error');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}
